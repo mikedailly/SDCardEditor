@@ -2,8 +2,8 @@
 .NET DLL and UI for accessing SD card images directly  
 Copyright 2021 Mike Dailly, All rights reserved.
 
-The source fro this project is can be used freely for both commercial and non-commercial reasons, without charge or limit, but copyright is maintained and credit must be given to anyone who has contributed (see below) in any project where it is used.  
-No warranty is given to this project and you use it at your own risk. A link in the application to this project would be appreciated, but bot required. Source does not have to be bundled.  
+The source and executables for this project is can be used freely, for both commercial and non-commercial reasons, without charge, but copyright is maintained and credit must be given to anyone who has contributed (see below) in any project where it is used.  
+No warranty is given to this project, and you use it at your own risk. A link in the application to this project would be appreciated, but is not required. Source does not have to be bundled.  
 
 If you extend it, improve it, add new or missing features, please consider pushing back all changes for others to benefit from. This is again appreciated, but not required. Any accepted changes will be added to the contributors list.
 
