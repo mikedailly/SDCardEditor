@@ -1,23 +1,23 @@
 # SDCardEditor
 .NET DLL and UI for accessing SD card images directly
-Copyright 2021 Mike Dailly, All rights reserved.
+ Copyright 2021 Mike Dailly, All rights reserved.
 
-The source fro this project is can be used freely for both commercial and non-commercial reasons, without charge or limit, but copyright is maintained and credit must be given to anyone who has contributed (see below) in any project where it is used. No warranty is given to this project and you use it at your own risk. A link in the application to this project would be appreciated, but bot required. Source does not have to be bundled.
+ The source fro this project is can be used freely for both commercial and non-commercial reasons, without charge or limit, but copyright is maintained and credit must be given to anyone who has contributed (see below) in any project where it is used. No warranty is given to this project and you use it at your own risk. A link in the application to this project would be appreciated, but bot required. Source does not have to be bundled.
 
-If you extend it, improve it, add new or missing features, please consider pushing back all changes for others to benefit from. This is again appreciated, but not required. Any accepted changes will be added to the contributors list.
+ If you extend it, improve it, add new or missing features, please consider pushing back all changes for others to benefit from. This is again appreciated, but not required. Any accepted changes will be added to the contributors list.
 
 
 Contributors
 ------------
-Mike Dailly
+ Mike Dailly
 
 
 Usage
 -----
 
-Eample :- loading a ZX Spectrum Next image
+ Eample :- loading a ZX Spectrum Next image
 
-SDCard card = SDCard.Open( "C:\source\ZXSpectrum\_Demos\2gbimage\cspect-next-2gb.img" );
-List<DirectoryEntry> dir = card.ReadDirectory("Demos\\WidescreenImageDemo");
-byte[] f = card.LoadFile("demos\\WidescreenImageDemo\\readme.txt");
+ SDCard card = SDCard.Open( "C:\source\ZXSpectrum\_Demos\2gbimage\cspect-next-2gb.img" );
+ List<DirectoryEntry> dir = card.ReadDirectory("Demos\\WidescreenImageDemo");
+ byte[] f = card.LoadFile("demos\\WidescreenImageDemo\\readme.txt");
 
