@@ -16,7 +16,7 @@ Mike Dailly
 Usage
 -----
 
-	Example :- loading a ZX Spectrum Next image  
+Example :- loading a ZX Spectrum Next image  
 
 	SDCard card = SDCard.Open( "C:\source\ZXSpectrum\_Demos\2gbimage\cspect-next-2gb.img" );  
 	List<DirectoryEntry> dir = card.ReadDirectory("Demos\\WidescreenImageDemo");  
