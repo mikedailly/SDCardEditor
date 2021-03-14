@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace SDCardAccess
 {
+    // *********************************************************************************************************
+    /// <summary>
+    ///     Possible file attributes
+    /// </summary>
+    // *********************************************************************************************************
     [Flags]
     public enum eFileAttribute
     {
@@ -24,6 +29,12 @@ namespace SDCardAccess
         /// <summary>Has been changed since last backup</summary>
         Archive = 32
     }
+
+    // *********************************************************************************************************
+    /// <summary>
+    ///     A single entry in the Directory (file or directory)
+    /// </summary>
+        // *********************************************************************************************************
     public class DirectoryEntry
     {
         /// <summary>Long filename</summary>
@@ -36,7 +47,17 @@ namespace SDCardAccess
         public int Cluster;
         /// <summary>File size in bytes</summary>
         public long FileSize;
+        /// <summary>Date/Time of the file/directory</summary>
+        public DateTime time;
 
+        // *********************************************************************************************************
+        /// <summary>
+        ///     Simple debugging output
+        /// </summary>
+        /// <returns>
+        ///     String summery
+        /// </returns>
+        // *********************************************************************************************************
         public string ToString()
         {
             return Filename + ":(c)" + Cluster.ToString() + ":(s)" + FileSize.ToString();

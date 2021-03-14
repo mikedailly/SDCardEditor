@@ -672,6 +672,17 @@ namespace SDCardAccess
 
         // ********************************************************************************************
         /// <summary>
+        ///     Close the SD card - flushing any modifications while we're at it.
+        /// </summary>
+        // ********************************************************************************************
+        public void Close()
+        {
+            SDFile.Flush();
+            SDFile.Close();
+        }
+
+        // ********************************************************************************************
+        /// <summary>
         ///     
         /// </summary>
         /// <param name="_filename"></param>

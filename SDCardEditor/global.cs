@@ -7,6 +7,11 @@ using SDCardAccess;
 
 namespace SDCardEditor
 {
+    // *********************************************************************************************************
+    /// <summary>
+    ///     SD Card "instance" global store - just to make things a little easier
+    /// </summary>
+        // *********************************************************************************************************
     public class global
     {
         /// <summary>The </summary>
@@ -15,7 +20,11 @@ namespace SDCardEditor
         public string CurrentDirectory;
 
 
-
+        // *********************************************************************************************************
+        /// <summary>
+        ///     Create a new global store
+        /// </summary>
+        // *********************************************************************************************************
         public global()
         {
             Card = null;
