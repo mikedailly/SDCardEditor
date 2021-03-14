@@ -718,7 +718,6 @@ namespace SDCardAccess
                 SDFile = File.Open(_filename, System.IO.FileMode.Open, System.IO.FileAccess.ReadWrite, FileShare.ReadWrite);
                 CardSize = SDFile.Length;
                 TotalNumberSectors = CardSize / Sector.SectorSize;
-
             }
             catch
             {

@@ -36,8 +36,10 @@ namespace SDCardEditor
             listView1.Columns.Add("Date", -2, HorizontalAlignment.Left);
             listView1.Columns.Add("Attribute", -2, HorizontalAlignment.Left);
             listView1.Columns.Add("Cluster", -2, HorizontalAlignment.Left);
+            listView1.MultiSelect = true;
             AdjustColumnSize();
         }
+
 
         // *********************************************************************************************************
         /// <summary>
@@ -150,53 +152,9 @@ namespace SDCardEditor
                         // Load and view text files
                         file = global.CurrentDirectory + "\\" + file;
                         byte[] data = global.Card.LoadFile(file);
-                        StringBuilder sb = new StringBuilder(data.Length + 1);
-                        byte prev = 255;
-                        for (int i = 0; i < data.Length; i++)
-                        {
-                            byte b1 = data[i];
-                            #region Newline check/fix
-                            // if a 0x0a, then check for a "pair", if not add a newline replacement
-                            if (b1 == 0x0a)
-                            {
-                                // part of an 0x0a,0x0d pair? if so carry on....
-                                if (prev == 0xd)
-                                {
-                                }
-                                else if (i < (data.Length - 1) && data[i + 1] == 0x0d)
-                                {
-                                }
-                                else
-                                {
-                                    // if ONLY 0x0a, then feed both
-                                    sb.Append("\r\n");
-                                }
-                            }
-                            if (b1 == 0x0d)
-                            {
-                                // part of an 0x0a,0x0d pair? if so carry on....
-                                if (prev == 0xa)
-                                {
-                                }
-                                else if (i < (data.Length - 1) && data[i + 1] == 0x0a)
-                                {
-                                }
-                                else
-                                {
-                                    // if ONLY 0x0d, then feed both
-                                    sb.Append("\r\n");
-                                }
-                            }
-                            #endregion
-                            else {
-                                sb.Append((char)b1);
-                            }
-                            prev = b1;
-                        }
-                        TextViewer viewer = new TextViewer(sb.ToString());
-                        viewer.Show();
+                        TextViewer.View(data);
                     }
-                    else if ( Path.GetExtension(file).ToLower() == ".bmp" || Path.GetExtension(file).ToLower() == ".png" || Path.GetExtension(file).ToLower() == ".jpg")
+                    else if (Path.GetExtension(file).ToLower() == ".bmp" || Path.GetExtension(file).ToLower() == ".png" || Path.GetExtension(file).ToLower() == ".jpg")
                     {
                         // simple image viewer
                         file = global.CurrentDirectory + "\\" + file;
@@ -205,7 +163,16 @@ namespace SDCardEditor
                         ImageViewer viewer = new ImageViewer(data, Path.GetExtension(file).ToLower());
                         viewer.Show();
                     }
-                    break;
+                    else if (Path.GetExtension(file).ToLower() == ".bas")
+                    {
+                        // simple image viewer
+                        file = global.CurrentDirectory + "\\" + file;
+                        byte[] basic_file = global.Card.LoadFile(file);
+                        //Basic.Basic2Text(basic_file);
+
+                        //TextViewer.View(data);
+                    }
+                        break;                        
                 }
             }
         }
