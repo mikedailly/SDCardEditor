@@ -68,7 +68,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox1.Location = new System.Drawing.Point(12, 55);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(705, 119);
+            this.groupBox1.Size = new System.Drawing.Size(705, 121);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Disk Info";
@@ -83,7 +83,7 @@
             this.listView1.Location = new System.Drawing.Point(12, 180);
             this.listView1.MultiSelect = false;
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(705, 386);
+            this.listView1.Size = new System.Drawing.Size(705, 405);
             this.listView1.TabIndex = 3;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -102,8 +102,9 @@
             // 
             // CurrentDirLabel
             // 
+            this.CurrentDirLabel.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
             this.CurrentDirLabel.AutoSize = true;
-            this.CurrentDirLabel.Location = new System.Drawing.Point(12, 572);
+            this.CurrentDirLabel.Location = new System.Drawing.Point(9, 588);
             this.CurrentDirLabel.Name = "CurrentDirLabel";
             this.CurrentDirLabel.Size = new System.Drawing.Size(35, 13);
             this.CurrentDirLabel.TabIndex = 5;
@@ -149,7 +150,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(729, 608);
+            this.ClientSize = new System.Drawing.Size(729, 610);
             this.Controls.Add(this.CurrentDirLabel);
             this.Controls.Add(this.OpenSDCardButton);
             this.Controls.Add(this.listView1);

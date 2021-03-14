@@ -643,9 +643,26 @@ namespace SDCardAccess
         }
 
 
+        // ********************************************************************************************
+        /// <summary>
+        ///     Load a file from the disk image into memory
+        /// </summary>
+        /// <param name="_file"></param>
+        /// <returns>
+        ///     byte[] holding the file, or null for error
+        /// </returns>
+        // ********************************************************************************************
         public byte[] LoadFile(string _file)
         {
+            if (_file.Length > 0 && _file[0] != PATH_SEPERATOR)
+            {
+                _file = CurrentDirectory + PATH_SEPERATOR + _file;
+            }
             _file = FixPath(_file);
+            if (_file.Length > 0 && _file[0] == PATH_SEPERATOR)
+            {
+                _file = _file.Substring(1);
+            }
 
             DirectoryEntry d = FindItem(_file);
             if (d == null) return null;
@@ -654,15 +671,16 @@ namespace SDCardAccess
             long index = 0;
             byte[] buffer = new byte[total];
             int c = d.Cluster;
+            Cluster cluster = ReadCluster(c);
             while (index<total)
             {
-                Cluster cluster = ReadCluster(c);
                 long size = cluster.buffer.Length;
-                if (size > total) size = total - index;
+                if ((index+size) > total) size = total - index;
                 for(int i = 0; i < size; i++)
                 {
                     buffer[index++] = cluster[i];
                 }
+                cluster = GetNextCluster(cluster);
             }
 
             return buffer;

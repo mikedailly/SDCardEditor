@@ -16,6 +16,9 @@ namespace SDCardEditor
     {
         public global global;
 
+        /// <summary>The current directory listing</summary>
+        public List<DirectoryEntry> DirectoryListing;
+
         public Form1()
         {
             global = new global();
@@ -67,19 +70,19 @@ namespace SDCardEditor
         public void SetDirectory(string _directory)
         {
             if (global.Card == null) return;
-            List<DirectoryEntry> dir = global.Card.ReadDirectory(_directory);
+            DirectoryListing = global.Card.ReadDirectory(_directory);
             CurrentDirLabel.Text = _directory;
             CurrentDirLabel.ForeColor = Color.Black;
 
             listView1.Items.Clear();
-            if (dir == null || dir.Count == 0)
+            if (DirectoryListing == null || DirectoryListing.Count == 0)
             {
                 CurrentDirLabel.ForeColor = Color.Red;
                 return;
             }
 
             // Now fill in directory
-            foreach (DirectoryEntry entry in dir)
+            foreach (DirectoryEntry entry in DirectoryListing)
             {
                 string[] item = new string[] { entry.Filename, entry.FileSize.ToString(), "1/1/1", entry.Attribute.ToString(), entry.Cluster.ToString() };
                 listView1.Items.Add( new ListViewItem(item));
@@ -129,12 +132,82 @@ namespace SDCardEditor
         // *********************************************************************************************************
         private void listView1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string dir = listView1.SelectedItems[0].SubItems[0].Text;
+            string file = listView1.SelectedItems[0].SubItems[0].Text;
 
-            global.CurrentDirectory += "\\" + dir;
-            global.CurrentDirectory = global.Card.GetFullPath(global.CurrentDirectory);
-            SetDirectory(global.CurrentDirectory);
+            foreach (DirectoryEntry entry in DirectoryListing)
+            {
+                if (entry.Filename == file)
+                {
+                    if ((entry.Attribute & eFileAttribute.Directory) != 0)
+                    {
+                        // change Directory
+                        global.CurrentDirectory += "\\" + file;
+                        global.CurrentDirectory = global.Card.GetFullPath(global.CurrentDirectory);
+                        SetDirectory(global.CurrentDirectory);
+                    }
+                    else if (Path.GetExtension(file).ToLower() == ".txt" || Path.GetExtension(file).ToLower() == ".md")
+                    {
+                        // Load and view text files
+                        file = global.CurrentDirectory + "\\" + file;
+                        byte[] data = global.Card.LoadFile(file);
+                        StringBuilder sb = new StringBuilder(data.Length + 1);
+                        byte prev = 255;
+                        for (int i = 0; i < data.Length; i++)
+                        {
+                            byte b1 = data[i];
+                            #region Newline check/fix
+                            // if a 0x0a, then check for a "pair", if not add a newline replacement
+                            if (b1 == 0x0a)
+                            {
+                                // part of an 0x0a,0x0d pair? if so carry on....
+                                if (prev == 0xd)
+                                {
+                                }
+                                else if (i < (data.Length - 1) && data[i + 1] == 0x0d)
+                                {
+                                }
+                                else
+                                {
+                                    // if ONLY 0x0a, then feed both
+                                    sb.Append("\r\n");
+                                }
+                            }
+                            if (b1 == 0x0d)
+                            {
+                                // part of an 0x0a,0x0d pair? if so carry on....
+                                if (prev == 0xa)
+                                {
+                                }
+                                else if (i < (data.Length - 1) && data[i + 1] == 0x0a)
+                                {
+                                }
+                                else
+                                {
+                                    // if ONLY 0x0d, then feed both
+                                    sb.Append("\r\n");
+                                }
+                            }
+                            #endregion
+                            else {
+                                sb.Append((char)b1);
+                            }
+                            prev = b1;
+                        }
+                        TextViewer viewer = new TextViewer(sb.ToString());
+                        viewer.Show();
+                    }
+                    else if ( Path.GetExtension(file).ToLower() == ".bmp" || Path.GetExtension(file).ToLower() == ".png" || Path.GetExtension(file).ToLower() == ".jpg")
+                    {
+                        // simple image viewer
+                        file = global.CurrentDirectory + "\\" + file;
+                        byte[] data = global.Card.LoadFile(file);
 
+                        ImageViewer viewer = new ImageViewer(data, Path.GetExtension(file).ToLower());
+                        viewer.Show();
+                    }
+                    break;
+                }
+            }
         }
 
         #region MENU items
