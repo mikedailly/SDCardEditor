@@ -35,7 +35,6 @@ namespace SDCardAccess
         string Filename;
         long CardSize = 0;
         long TotalNumberSectors = 0;
-        long FatCacheSector = -1;
 
         long fat_begin_lba;
         long cluster_begin_lba;
@@ -55,7 +54,6 @@ namespace SDCardAccess
         BootSector BootSector;
         Partition CurrentPartition;
 
-        Sector LastFATSector;
 
         List<Sector> Sectors;
         List<Cluster> Clusters;
@@ -695,7 +693,6 @@ namespace SDCardAccess
             Sectors = new List<Sector>(SectorCacheCount);
             Clusters = new List<Cluster>(ClusterCacheCount);
             Partitions = new List<Partition>(4);
-            FatCacheSector = -1;
 
             Filename = _filename;
             try

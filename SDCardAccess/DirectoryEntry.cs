@@ -58,7 +58,7 @@ namespace SDCardAccess
         ///     String summery
         /// </returns>
         // *********************************************************************************************************
-        public string ToString()
+        public override string ToString()
         {
             return Filename + ":(c)" + Cluster.ToString() + ":(s)" + FileSize.ToString();
         }

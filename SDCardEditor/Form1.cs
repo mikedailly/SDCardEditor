@@ -137,7 +137,14 @@ namespace SDCardEditor
 
         }
 
-
+        #region MENU items
+        // *********************************************************************************************************
+        /// <summary>
+        ///     Open File menu item
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        // *********************************************************************************************************
         private void openSDCardImageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -155,5 +162,6 @@ namespace SDCardEditor
                 }
             }
         }
+        #endregion
     }
 }
