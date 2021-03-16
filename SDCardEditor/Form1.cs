@@ -38,6 +38,8 @@ namespace SDCardEditor
             listView1.Columns.Add("Cluster", -2, HorizontalAlignment.Left);
             listView1.MultiSelect = true;
             AdjustColumnSize();
+
+            Init_DnD();
         }
 
 
@@ -168,7 +170,7 @@ namespace SDCardEditor
                         // simple image viewer
                         file = global.CurrentDirectory + "\\" + file;
                         byte[] basic_file = global.Card.LoadFile(file);
-                        //Basic.Basic2Text(basic_file);
+                        Basic.Basic2Text(basic_file);
 
                         //TextViewer.View(data);
                     }
@@ -203,5 +205,7 @@ namespace SDCardEditor
             }
         }
         #endregion
+
+
     }
 }

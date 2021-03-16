@@ -56,6 +56,9 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Form_DnD.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="global.cs" />
     <Compile Include="ImageViewer.cs">
       <SubType>Form</SubType>

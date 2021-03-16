@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace SDCardAccess
 {
-    public class SDCard
+    public class SDCard  
     {
 
         /// <summary>Number of sectors to "cache" by default</summary>
@@ -682,8 +682,62 @@ namespace SDCardAccess
                 }
                 cluster = GetNextCluster(cluster);
             }
-
             return buffer;
+        }
+
+        // ********************************************************************************************
+        /// <summary>
+        ///     Load a file from the disk image into memory
+        /// </summary>
+        /// <param name="_file">file to copy</param>
+        /// <param name="_dest">Destination path</param>
+        /// <returns>
+        ///     true for copied, false for error
+        /// </returns>
+        // ********************************************************************************************
+        public bool ExportFile(string _file, string _dest)
+        {
+            if (_file.Length > 0 && _file[0] != PATH_SEPERATOR)
+            {
+                _file = CurrentDirectory + PATH_SEPERATOR + _file;
+            }
+            _file = FixPath(_file);
+            if (_file.Length > 0 && _file[0] == PATH_SEPERATOR)
+            {
+                _file = _file.Substring(1);
+            }
+
+
+            DirectoryEntry d = FindItem(_file);
+            if (d == null) return false;
+
+            string p = Path.GetDirectoryName(_dest);
+            try
+            {
+                Directory.CreateDirectory(p);
+            }
+            catch
+            {
+                return false;
+            }
+            FileStream dest_file = File.Open(_dest, System.IO.FileMode.Create, System.IO.FileAccess.ReadWrite, FileShare.ReadWrite);
+
+            long total = d.FileSize;
+            long index = 0;
+            int c = d.Cluster;
+            Cluster cluster = ReadCluster(c);
+            while (index < total)
+            {
+                long size = cluster.buffer.Length;
+                if ((index + size) > total) size = total - index;
+                dest_file.Write(cluster.buffer, 0, (int)size);
+                
+                cluster = GetNextCluster(cluster);
+                index += size;
+            }
+            dest_file.Flush();
+            dest_file.Close();
+            return true;
         }
 
         // ********************************************************************************************
