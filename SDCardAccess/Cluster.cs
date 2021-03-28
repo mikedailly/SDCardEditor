@@ -18,11 +18,40 @@ namespace SDCardAccess
         /// <summary>Cluster size in bytes</summary>
         int ClusterSize;
         /// <summary>Sectors used by this cluster</summary>
-        List<Sector> sectors;
+        Sector[] sectors;
         /// <summary>Base Sector used in this cluster</summary>
         int SectorBase;
         /// <summary>Handle to sector manager</summary>
-        SectorManager SectorManager;
+        SectorManager mSectorManager;
+        /// <summary>Cluster manager handle</summary>
+        ClusterManager mClusterManager;
+
+
+        /// <summary>Lock this cluster and keep it in memory</summary>
+        bool mLocked;
+
+        // ***********************************************************************************************************************
+        /// <summary>
+        ///     Lock a cluster, and don't free it from the cache
+        /// </summary>
+        // ***********************************************************************************************************************
+        public bool Locked
+        {
+            get { return mLocked; }
+            set
+            {
+                if (mLocked == value) return;
+
+                if( value )
+                {
+                    mClusterManager.Lock(this);
+                }else
+                {
+                    mClusterManager.Unlock(this);
+                }
+                mLocked = value;
+            }
+        }
 
         // ***********************************************************************************************************************
         /// <summary>
@@ -66,13 +95,13 @@ namespace SDCardAccess
             get {
                 if (_index > ClusterSize) return 0;
 
-                int sec = _index/SectorManager.SectorSize;
-                int off = _index % SectorManager.SectorSize;
+                int sec = _index/mSectorManager.SectorSize;
+                int off = _index % mSectorManager.SectorSize;
                 Sector sector = sectors[sec];
                 if (sector == null)
                 {
                     // if the sector we want has been unloaded, load it back in again
-                    sectors[sec] = sector = SectorManager.ReadSector(SectorBase + sec);
+                    sectors[sec] = sector = mSectorManager.ReadSector(SectorBase + sec);
                 }
 
                 return sector[off];
@@ -80,13 +109,13 @@ namespace SDCardAccess
             set {
                 if (_index > ClusterSize) return;
 
-                int sec = _index / SectorManager.SectorSize;
-                int off = _index % SectorManager.SectorSize;
+                int sec = _index / mSectorManager.SectorSize;
+                int off = _index % mSectorManager.SectorSize;
                 Sector sector = sectors[sec];
                 if (sector == null)
                 {
                     // if the sector we want has been unloaded, load it back in again
-                    sectors[sec] = sector = SectorManager.ReadSector(SectorBase + sec);
+                    sectors[sec] = sector = mSectorManager.ReadSector(SectorBase + sec);
                 }
                 sector[off] = value;
 
@@ -101,13 +130,14 @@ namespace SDCardAccess
         // ***********************************************************************************************************************
         public void SetSize(int _size)
         {
-            sectors.Clear();
+            sysFree();
+
             int num = (_size + (SectorSize - 1)) / SectorSize;
             ClusterSize = _size;
-            for(int i = 0; i < num; i++)
+            sectors = new Sector[num];
+            for (int i = 0; i < num; i++)
             {
-                Sector s = SectorManager.ReadSector(SectorBase + i);
-                sectors.Add(s);
+                sectors[i] = mSectorManager.ReadSector(SectorBase + i);
             }
             mLength = _size;
         }
@@ -133,29 +163,75 @@ namespace SDCardAccess
 
         // ***********************************************************************************************************************
         /// <summary>
+        ///     Free This cluster
+        /// </summary>
+        // ***********************************************************************************************************************
+        internal void sysFree()
+        {
+            foreach(Sector sector in sectors)
+            {
+                if (sector != null)
+                {
+                    mSectorManager.Free(sector);
+                }
+            }
+        }
+
+        // ***********************************************************************************************************************
+        /// <summary>
+        ///     Free This cluster
+        /// </summary>
+        // ***********************************************************************************************************************
+        public void Free()
+        {
+            mClusterManager.Free(this);
+        }
+
+        // ***********************************************************************************************************************
+        /// <summary>
+        ///     Sector free callback
+        /// </summary>
+        /// <param name="_sector">the sector being freed</param>
+        // ***********************************************************************************************************************
+        private void SectorManager_OnFree(Sector _sector)
+        {
+            int num = (int)_sector.Number - SectorBase;
+            if( num>=0 && num<sectors.Length){
+                sectors[num] = null;
+            }
+        }
+
+        // ***********************************************************************************************************************
+        /// <summary>
         ///     Create a new cluster
         /// </summary>
         /// <param name="_cluster">Cluster number</param>
         /// <param name="_ClusterByteSize">cluster size in bytes</param>
         /// <param name="_SectorManager">pointer to the sector manager</param>
         // ***********************************************************************************************************************
-        public Cluster(int _cluster, int _SectorBaser, int _ClusterByteSize, SectorManager _SectorManager)
+        public Cluster(int _cluster, int _SectorBaser, int _ClusterByteSize, SectorManager _SectorManager, ClusterManager _ClusterManager)
         {
             mLength = _ClusterByteSize;
-            SectorManager = _SectorManager;
-            SectorSize = SectorManager.SectorSize;
+            mSectorManager = _SectorManager;
+            mClusterManager = _ClusterManager;
+            SectorSize = mSectorManager.SectorSize;
             ClusterSize = _ClusterByteSize;
             SectorBase = _SectorBaser;
             int count = (ClusterSize+(SectorSize-1)) / SectorSize;
             Number = _cluster;
             mLength = ClusterSize;
-            sectors = new List<Sector>(count);
-            for(int i=0;i< count; i++)
-            {
-                sectors.Add( SectorManager.ReadSector(SectorBase + i) );
+            sectors = new Sector[count];
+            _SectorManager.OnFree += SectorManager_OnFree;
+            for (int i = 0; i < count; i++){
+                sectors[i] = null;
             }
-        }
 
+            for (int i=0;i< count; i++)
+            {
+                sectors[i] = mSectorManager.ReadSector(SectorBase + i);
+            }
+
+        }
 
     }
 }

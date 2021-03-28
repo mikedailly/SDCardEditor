@@ -14,7 +14,7 @@ namespace SDCardAccess
     {
 
         /// <summary>Number of sectors to "cache" by default</summary>
-        public const int SECTOR_CACHE_DEFAULT = 1024;
+        public const int SECTOR_CACHE_DEFAULT = 2048;
         /// <summary>Number of sectors to "cache" by default</summary>
         public const int CLUSTER_CACHE_DEFAULT = 256;
         /// <summary>anything over this is End of file (fat32)</summary>
@@ -627,6 +627,7 @@ namespace SDCardAccess
         // ********************************************************************************************
         public void Close()
         {
+            SectorManager.Free();
             SDFile.Flush();
             SDFile.Close();
         }

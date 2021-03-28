@@ -9,14 +9,82 @@ namespace SDCardAccess
 {
     public class ClusterManager
     {
+        // ********************************************************************************************
+        /// <summary>
+        ///     Free cluster callback - called before freeing.
+        /// </summary>
+        /// <param name="_cluster">cluster being freed</param>
+        // ********************************************************************************************
+        public delegate void dClusterFreed(Cluster _cluster);
+
+
         int ClusterCacheCount;
-        int ClusterSize;
         SectorManager mSectorManager;
         FileStream mCard;
         BootSector BootSector;
         int root_dir_first_sector;
 
         public List<Cluster> Clusters;
+        public List<Cluster> LockedClusters;
+        public event dClusterFreed OnFree;
+
+        // ********************************************************************************************
+        /// <summary>
+        ///     LOCK the cluster, make sure it's not "flushed" from the cache
+        /// </summary>
+        /// <param name="_cluster">Cluster to lock</param>
+        // ********************************************************************************************
+        public void Lock(Cluster _cluster)
+        {
+            if (Clusters.Remove(_cluster))
+            {
+                LockedClusters.Add(_cluster);
+            }
+        }
+
+        // ********************************************************************************************
+        /// <summary>
+        ///     UNLOCK the cluster, and stick it back into the cache. If this makes the cache too large,
+        ///     then free the lowest item as normal.
+        /// </summary>
+        /// <param name="_cluster">Cluster to lock</param>
+        // ********************************************************************************************
+        public void Unlock(Cluster _cluster)
+        {
+            // remove from the locked list
+            if (LockedClusters.Remove(_cluster))
+            {
+                // if we're fully cached out, drop the least used item...
+                if (Clusters.Count >= ClusterCacheCount)
+                {
+                    // check for dirty here....
+                    Clusters.RemoveAt(ClusterCacheCount - 1);
+                }
+                // move most recent to head of the list
+                Clusters.Insert(0, _cluster);                
+            }
+        }
+
+        // ********************************************************************************************
+        /// <summary>
+        ///     Free a cluster
+        /// </summary>
+        /// <param name="_cluster"></param>
+        // ********************************************************************************************
+        public void Free(Cluster _cluster)
+        {
+            if (OnFree != null) OnFree.Invoke(_cluster);
+            _cluster.sysFree();
+
+            if (_cluster.Locked)
+            {
+                LockedClusters.Remove(_cluster);
+            }
+            else
+            {
+                Clusters.Remove(_cluster);
+            }
+        }
 
         // ********************************************************************************************
         /// <summary>
@@ -70,7 +138,7 @@ namespace SDCardAccess
                     ClusterSize = 16384;
                 }
             }
-            Cluster cluster = new Cluster(_cluster, sector, ClusterSize, mSectorManager);
+            Cluster cluster = new Cluster(_cluster, sector, ClusterSize, mSectorManager, this);
 
 
             // if we're fully cached out, drop the least used...

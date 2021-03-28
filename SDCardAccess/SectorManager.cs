@@ -9,6 +9,8 @@ namespace SDCardAccess
 {
     public class SectorManager
     {
+        public delegate void dSectorFreed(Sector _sector);
+
         /// <summary>Number of sectors to "cache"</summary>
         public int SectorCacheCount;
         /// <summary>Sector size in bytes</summary>
@@ -20,7 +22,8 @@ namespace SDCardAccess
         FileStream Card;
         /// <summary>Cached Sectors</summary>
         List<Sector> Sectors;
-
+        /// <summary>Called on a sector free</summary>
+        public event dSectorFreed OnFree;
 
         // ********************************************************************************************
         /// <summary>
@@ -49,8 +52,7 @@ namespace SDCardAccess
             // Cache is maxed out, free the least used one....
             if(Sectors.Count>= SectorCacheCount)
             {
-                Sectors[Sectors.Count - 1].Dispose();
-                Sectors.RemoveAt(Sectors.Count - 1);
+                Free(Sectors[Sectors.Count - 1]);
             }
 
             // seek to the sector
@@ -58,19 +60,53 @@ namespace SDCardAccess
             Sector sect = new Sector(_number,Card);
             Card.Read(sect.buffer, 0, SectorSize);
 
-            // if we're fully cached out, drop the least used...
-            if (Sectors.Count >= SectorCacheCount)
-            {
-                Sectors.RemoveAt(SectorCacheCount - 1);
-            }
             // move most recent to head of the list
             Sectors.Insert(0, sect);
 
             return sect;
         }
 
+        // ****************************************************************************************
+        /// <summary>
+        ///     Flush ALL dirty sectors to disk
+        /// </summary>
+        // ****************************************************************************************
+        public void Flush()
+        {
+            foreach(Sector sec in Sectors)
+            {
+                sec.Flush();
+            }
+        }
 
+        // ****************************************************************************************
+        /// <summary>
+        ///     Free a sector...
+        /// </summary>
+        /// <param name="_sector">Free a sector</param>
+        // ****************************************************************************************
+        public void Free(Sector _sector)
+        {
+            if (OnFree != null) OnFree.Invoke(_sector);
 
+            Sectors.Remove(_sector);
+            _sector.Dispose();
+        }
+
+        // ****************************************************************************************
+        /// <summary>
+        ///     Flush ALL dirty sectors to disk
+        /// </summary>
+        // ****************************************************************************************
+        public void Free()
+        {
+            foreach (Sector sec in Sectors)
+            {
+                sec.Flush();
+                sec.Dispose();
+            }
+            Sectors.Clear();
+        }
 
         // *******************************************************************************************************************
         /// <summary>

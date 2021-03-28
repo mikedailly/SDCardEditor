@@ -413,6 +413,7 @@ namespace SDCardEditor
             }
             catch (Exception ex)
             {
+                Console.WriteLine("Error saving file - '" + _name + "', " + ex.Message);
                 //Log.WriteLine("Error saving file - '" + _name + "',  " + ex.Message);
                 return;
             }
