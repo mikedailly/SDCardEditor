@@ -146,6 +146,8 @@ namespace SDCardAccess
                 }
                 // ROOT dir in fixed location after FATs
                 RootDriveTableCluster = -1;
+                FAT32_MaxClusters = (PartitionSectors - (SectorsPerFAT + ReservedSectors + SectorNumber)) / SectorsPerCluster;
+
             }
             else 
             {
@@ -173,7 +175,7 @@ namespace SDCardAccess
                 Signature = (int)b[0x42];
                 ID = (int)b[0x43] + (((int)b[0x44]) << 8) + (((int)b[0x45]) << 16) + (((int)b[0x46]) << 24);
 
-                FAT32_MaxClusters = PartitionSectors / SectorsPerCluster;
+                FAT32_MaxClusters = (PartitionSectors- (SectorsPerFAT+ ReservedSectors + SectorNumber))/ SectorsPerCluster;
                 VolumeLabel = "";
                 for (int i = 0; i < 11; i++)
                 {
@@ -194,7 +196,7 @@ namespace SDCardAccess
             // Now work out base of everything
             FATSector = ReservedSectors + SectorNumber;
             SectorBase = (SectorsPerFAT * FATCopies) + ReservedSectors + SectorNumber;
-            Cluster.ClusterSize = SectorsPerCluster * BytesPerSector;
+            //Cluster.ClusterSize = SectorsPerCluster * BytesPerSector;
         }
 
     }

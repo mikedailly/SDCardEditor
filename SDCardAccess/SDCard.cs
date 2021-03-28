@@ -14,7 +14,7 @@ namespace SDCardAccess
     {
 
         /// <summary>Number of sectors to "cache" by default</summary>
-        public const int SECTOR_CACHE_DEFAULT = 256;
+        public const int SECTOR_CACHE_DEFAULT = 1024;
         /// <summary>Number of sectors to "cache" by default</summary>
         public const int CLUSTER_CACHE_DEFAULT = 256;
         /// <summary>anything over this is End of file (fat32)</summary>
@@ -25,8 +25,6 @@ namespace SDCardAccess
         public const char PATH_SEPERATOR = '\\';
 
 
-        /// <summary>Number of sectors to "cache"</summary>
-        public int SectorCacheCount;
         /// <summary>Number of sectors to "cache"</summary>
         public int ClusterCacheCount;
 
@@ -54,134 +52,9 @@ namespace SDCardAccess
         BootSector BootSector;
         Partition CurrentPartition;
 
-
-        List<Sector> Sectors;
-        List<Cluster> Clusters;
+        SectorManager SectorManager;
+        ClusterManager ClusterManager;
         List<Partition> Partitions;
-
-        // ********************************************************************************************
-        /// <summary>
-        ///     Read a sector
-        /// </summary>
-        /// <param name="_number">the sector number to read</param>
-        /// <returns>
-        ///     The sector being read
-        /// </returns>
-        // ********************************************************************************************
-        public Sector ReadSector(long _number)
-        {
-            // first 
-            for (int i = 0; i < Sectors.Count; i++)
-            {
-                Sector s = Sectors[i];
-                if (s.Number == _number)
-                {
-                    // move most recent to head of the list
-                    Sectors.RemoveAt(i);
-                    Sectors.Insert(0, s);
-                    return s;
-                }
-            }
-
-            // seek to the sector
-            SDFile.Seek(_number * Sector.SectorSize, SeekOrigin.Begin);
-            Sector sect = new Sector(_number);
-            SDFile.Read(sect.buffer, 0, Sector.SectorSize);
-
-            // if we're fully cached out, drop the least used...
-            if (Sectors.Count >= SectorCacheCount)
-            {
-                Sectors.RemoveAt(SectorCacheCount - 1);
-            }
-            // move most recent to head of the list
-            Sectors.Insert(0, sect);
-
-            return sect;
-        }
-
-
-        // ********************************************************************************************
-        /// <summary>
-        ///     Read a cluster
-        /// </summary>
-        /// <param name="_cluster">The cluster to read</param>
-        /// <returns>
-        /// </returns>
-        // ********************************************************************************************
-        public Cluster ReadCluster(int _cluster, int _bytesToRead = -1)
-        {
-            // first check to see if it's in the cache
-            for (int i = 0; i < Clusters.Count; i++)
-            {
-                Cluster s = Clusters[i];
-                if (s.Number == _cluster)
-                {
-                    // move most recent to head of the list
-                    Clusters.RemoveAt(i);
-                    Clusters.Insert(0, s);
-                    return s;
-                }
-            }
-
-            int base_sector = (int) root_dir_first_sector;
-            int BytesPerSector = BootSector.BytesPerSector;
-
-            int bytes_to_read = BootSector.SectorsPerCluster * BytesPerSector;
-            // Number of bytes required...rounded up to a whole sector, but LESS or EQUAL than a cluster only
-            if (_bytesToRead != -1 && _bytesToRead < bytes_to_read)
-            {
-                bytes_to_read = _bytesToRead;
-                bytes_to_read = (bytes_to_read + (BytesPerSector - 1)) / BytesPerSector;
-                bytes_to_read = bytes_to_read * BytesPerSector;
-            }
-
-            int clust_offset = 2;
-            if (BootSector.FatType == eFATType.FAT32 && _cluster==-1)
-            {
-                _cluster = BootSector.RootDriveTableCluster;
-                clust_offset = 2;
-            }
-            // cluster numbers start at 2.... so -2
-            int root_dir_size = 32 * BootSector.FAT16_NumRootEntries;
-            int sector = ((_cluster - clust_offset) * BootSector.SectorsPerCluster) + base_sector + (root_dir_size/BootSector.BytesPerSector);
-            int ClusterSize = BootSector.SectorsPerCluster;
-            if (_cluster == -1)
-            {
-                // if -1 then ROOT directory
-                sector = (int)root_dir_first_sector; // (BootSector.FATCopies * BootSector.SectorsPerFAT) + BootSector.ReservedSectors + (int)CurrentPartition.LBABegin;
-                if (BootSector.FatType == eFATType.FAT16)
-                {
-                    ClusterSize = 16384;
-                }
-
-            }
-
-            Cluster cluster = new Cluster(_cluster);
-            if (ClusterSize != BootSector.SectorsPerCluster)
-            {
-                cluster.SetSize(ClusterSize);
-                ClusterSize = (root_dir_size / BootSector.BytesPerSector);
-            }
-            for (int i = 0; i < ClusterSize; i++)
-            {
-                Sector s = ReadSector(sector + i);
-                int offset = i * BytesPerSector;
-                for (int b = 0; b < BytesPerSector; b++)
-                {
-                    cluster[offset + b] = s[b];
-                }
-            }
-
-            // if we're fully cached out, drop the least used...
-            if (Clusters.Count >= ClusterCacheCount)
-            {
-                // check for dirty here....
-                Clusters.RemoveAt(ClusterCacheCount - 1);
-            }
-            // move most recent to head of the list
-            Clusters.Insert(0, cluster);
-            return cluster;
-        }
 
 
         // ********************************************************************************************
@@ -191,7 +64,8 @@ namespace SDCardAccess
         // ********************************************************************************************
         private void ReadMBR()
         {
-            Sector s = ReadSector(0);
+            Partitions = new List<Partition>(4);
+            Sector s = SectorManager.ReadSector(0);
 
             Partition p = new Partition(s, 0);
             if (p.LBABegin != 0) Partitions.Add(p);
@@ -213,10 +87,12 @@ namespace SDCardAccess
         // ********************************************************************************************
         private void ReadBootSector(long _sector)
         {
-            Sector s = ReadSector(_sector);
+            Sector s = SectorManager.ReadSector(_sector);
             BootSector = new BootSector(s);
 
             BytesPerSector = BootSector.BytesPerSector;
+            SectorManager.SectorSize = BytesPerSector;
+            SectorManager.Boot = BootSector;
             BytesPerCluster = BootSector.SectorsPerCluster * BytesPerSector;
 
             fat_begin_lba = _sector + BootSector.ReservedSectors;
@@ -272,7 +148,7 @@ namespace SDCardAccess
                 var ClusterOffset = (cluster_number * 4) - (sector * BytesPerSector);
                 sector += BootSector.FATSector;
 
-                Sector sector_data = ReadSector( sector );
+                Sector sector_data = SectorManager.ReadSector( sector );
                 NextCluster = sector_data[ClusterOffset] | (sector_data[ClusterOffset + 1] << 8) | (sector_data[ClusterOffset + 2] << 16) | (sector_data[ClusterOffset + 3] << 24);
                 if (NextCluster == 0xffffffff) return null;
 
@@ -286,12 +162,12 @@ namespace SDCardAccess
                 var ClusterOffset = (cluster_number * 2) - (sector * BytesPerSector);
                 sector += BootSector.FATSector;
 
-                Sector sector_data = ReadSector(sector);
+                Sector sector_data = SectorManager.ReadSector(sector);
                 NextCluster = sector_data[ClusterOffset] | (sector_data[ClusterOffset + 1] << 8);
                 NextCluster = (int)(NextCluster & 0xffff);
                 if (NextCluster == FAT_16_EOF) return null;
             }
-            Cluster c = ReadCluster((int)NextCluster);
+            Cluster c = ClusterManager.ReadCluster((int)NextCluster);
             return c;
         }
 
@@ -319,7 +195,7 @@ namespace SDCardAccess
             List<DirectoryEntry> directory = new List<DirectoryEntry>();
             while (true)
             {
-                Cluster cluster = ReadCluster(_cluster);
+                Cluster cluster = ClusterManager.ReadCluster(_cluster);
                 int DirEntries = BytesPerCluster / 32;
 
                 // If first sector, then read diskname
@@ -671,10 +547,10 @@ namespace SDCardAccess
             long index = 0;
             byte[] buffer = new byte[total];
             int c = d.Cluster;
-            Cluster cluster = ReadCluster(c);
+            Cluster cluster = ClusterManager.ReadCluster(c);
             while (index<total)
             {
-                long size = cluster.buffer.Length;
+                long size = cluster.Length;
                 if ((index+size) > total) size = total - index;
                 for(int i = 0; i < size; i++)
                 {
@@ -725,13 +601,17 @@ namespace SDCardAccess
             long total = d.FileSize;
             long index = 0;
             int c = d.Cluster;
-            Cluster cluster = ReadCluster(c);
+            Cluster cluster = ClusterManager.ReadCluster(c);
             while (index < total)
             {
-                long size = cluster.buffer.Length;
+                long size = cluster.Length;
                 if ((index + size) > total) size = total - index;
-                dest_file.Write(cluster.buffer, 0, (int)size);
-                
+                byte[] buff = new byte[size];
+                for (int i = 0; i < size; i++){
+                    buff[i] = cluster[i];
+                }
+                dest_file.Write(buff, 0, (int)size);
+
                 cluster = GetNextCluster(cluster);
                 index += size;
             }
@@ -751,6 +631,72 @@ namespace SDCardAccess
             SDFile.Close();
         }
 
+        // ********************************************************************************************************************
+        /// <summary>
+        ///     Allocate a cluster
+        /// </summary>
+        /// <returns>
+        ///     Free cluster number
+        /// </returns>
+        // ********************************************************************************************************************
+        private int AllocatateCluster()
+        {
+            return AllocatateCluster(-1);
+        }
+
+        // ********************************************************************************************************************
+        /// <summary>
+        ///     Allocate a cluster
+        /// </summary>
+        /// <param name="_previous">Cluster number to link "from"</param>
+        /// <returns>
+        /// </returns>
+        // ********************************************************************************************************************
+        private int AllocatateCluster(int _previous)
+        {
+            int MaxClusters = BootSector.FAT32_MaxClusters;
+            int MaxFatSectors = BootSector.SectorsPerFAT;
+            int sect = BootSector.FATSector;
+            bool first = true;
+            int found_cluster = 0;
+            for (int i = 0; i < MaxFatSectors; i++)
+            {
+                Sector sector = SectorManager.ReadSector(sect);
+                if (BootSector.FatType == eFATType.FAT16)
+                {
+                    int clusters_persector = BootSector.BytesPerSector/2;
+                    int cnt = BootSector.BytesPerSector;
+                    int start = 0;
+                    if (first) start = 2;
+                    for (int cl = start; cl < cnt; cl+=2)
+                    {
+                        int fat_entry = sector.Read16(cl);
+                        // if entry is 0, then it's
+                        if (fat_entry == 0)
+                        {
+                            found_cluster = i * 1;
+                        }
+                    }
+                }else
+                {
+                    int cnt = BootSector.BytesPerSector / 4;
+                    int start = 0;
+                    if (first) start = 2;
+                    for (int cl = start; cl < cnt; cl++)
+                    {
+
+                    }
+                }
+            }
+            return 0;
+        }
+
+        public  void MakeDir(string _name)
+        {
+
+        }
+
+
         // ********************************************************************************************
         /// <summary>
         ///     
@@ -759,19 +705,13 @@ namespace SDCardAccess
         // ********************************************************************************************
         private SDCard( string _filename )
         {
-            SectorCacheCount = SECTOR_CACHE_DEFAULT;
-            ClusterCacheCount = CLUSTER_CACHE_DEFAULT;
-            CurrentDirectory = "";
-            Sectors = new List<Sector>(SectorCacheCount);
-            Clusters = new List<Cluster>(ClusterCacheCount);
-            Partitions = new List<Partition>(4);
 
             Filename = _filename;
             try
             {
                 SDFile = File.Open(_filename, System.IO.FileMode.Open, System.IO.FileAccess.ReadWrite, FileShare.ReadWrite);
                 CardSize = SDFile.Length;
-                TotalNumberSectors = CardSize / Sector.SectorSize;
+                TotalNumberSectors = CardSize / Sector.DEFAULT_SECTOR_SIZE;
             }
             catch
             {
@@ -780,9 +720,14 @@ namespace SDCardAccess
                 return;
             }
 
-            ReadMBR();
+            SectorManager = new SectorManager(SECTOR_CACHE_DEFAULT, SDFile);
+            ClusterCacheCount = CLUSTER_CACHE_DEFAULT;
+            CurrentDirectory = "";
 
+            ReadMBR();
             ReadBootSector(CurrentPartition.LBABegin);
+            ClusterManager = new ClusterManager(CLUSTER_CACHE_DEFAULT, BootSector, SectorManager, SDFile);
+
             ReadDirectory(BootSector.RootDriveTableCluster);
 
         }
