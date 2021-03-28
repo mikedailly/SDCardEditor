@@ -33,7 +33,8 @@ namespace SDCardEditor
             // setup column types
             listView1.Columns.Add("Name", -2, HorizontalAlignment.Left);
             listView1.Columns.Add("Size", -2, HorizontalAlignment.Left);
-            listView1.Columns.Add("Date", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Date Created", -2, HorizontalAlignment.Left);
+            listView1.Columns.Add("Date Modified", -2, HorizontalAlignment.Left);
             listView1.Columns.Add("Attribute", -2, HorizontalAlignment.Left);
             listView1.Columns.Add("Cluster", -2, HorizontalAlignment.Left);
             listView1.MultiSelect = true;
@@ -88,8 +89,13 @@ namespace SDCardEditor
             // Now fill in directory
             foreach (DirectoryEntry entry in DirectoryListing)
             {
-                string[] item = new string[] { entry.Filename, entry.FileSize.ToString(), "1/1/1", entry.Attribute.ToString(), entry.Cluster.ToString() };
-                listView1.Items.Add( new ListViewItem(item));
+                string created = "";
+                string lastwrite = "";
+                if (entry.IsCreateValid) created = entry.CreationTime.ToString();
+                if (entry.IsLastWriteValid) lastwrite = entry.LastWriteTime.ToString();
+
+                string[] item = new string[] { entry.Filename, entry.FileSize.ToString(), created, lastwrite, entry.Attribute.ToString(), entry.Cluster.ToString() };
+                listView1.Items.Add( new ListViewItem(item) );
             }
 
         }

@@ -12,7 +12,6 @@ namespace SDCardAccess
 {
     public class SDCard  
     {
-
         /// <summary>Number of sectors to "cache" by default</summary>
         public const int SECTOR_CACHE_DEFAULT = 2048;
         /// <summary>Number of sectors to "cache" by default</summary>
@@ -24,37 +23,46 @@ namespace SDCardAccess
         /// <summary>The internal path seperator we'll use</summary>
         public const char PATH_SEPERATOR = '\\';
 
-
+        
         /// <summary>Number of sectors to "cache"</summary>
         public int ClusterCacheCount;
 
-
+        /// <summary>The currently opened SD Card</summary>
         FileStream SDFile;
+        /// <summary>The Name of the current SD Card image</summary>
         string Filename;
+        /// <summary>Size of the SD card image in bytes</summary>
         long CardSize = 0;
+        /// <summary>Number of sectors in this card image</summary>
         long TotalNumberSectors = 0;
 
-        long fat_begin_lba;
-        long cluster_begin_lba;
-        long sectors_per_cluster;
-        long root_dir_first_sector;
+        /// <summary>Number of sectors in this card image</summary>
+        //long fat_begin_lba;
+        //long cluster_begin_lba;
+        //long sectors_per_cluster;
+        //long root_dir_first_sector;
 
 
+        /// <summary>Number of bytes per cluster</summary>
         int BytesPerCluster;
+        /// <summary>Number of bytes per sector (512)</summary>
         int BytesPerSector;
+        /// <summary>Name of the image (inside the SD Card)</summary>
         string DiskName = "";
+        /// <summary>Current card directory</summary>
+        public string CurrentDirectory;
 
-        public string CurrentDirectory
-        {
-            get;set;
-        }
-
+        /// <summary>Boot sector</summary>
         BootSector BootSector;
+        /// <summary>The currently selected partition</summary>
         Partition CurrentPartition;
-
-        SectorManager SectorManager;
-        ClusterManager ClusterManager;
+        /// <summary>List of upto 4 partitions</summary>
         List<Partition> Partitions;
+
+        /// <summary>The sector manager and sector cache</summary>
+        SectorManager SectorManager;
+        /// <summary>The Cluster manager and cluster cache</summary>
+        ClusterManager ClusterManager;
 
 
         // ********************************************************************************************
@@ -95,10 +103,10 @@ namespace SDCardAccess
             SectorManager.Boot = BootSector;
             BytesPerCluster = BootSector.SectorsPerCluster * BytesPerSector;
 
-            fat_begin_lba = _sector + BootSector.ReservedSectors;
-            cluster_begin_lba = CurrentPartition.LBABegin + BootSector.ReservedSectors + (BootSector.FATCopies * BootSector.SectorsPerFAT);
-            sectors_per_cluster = BootSector.SectorsPerCluster;
-            root_dir_first_sector = BootSector.SectorBase;
+            //fat_begin_lba = _sector + BootSector.ReservedSectors;
+            //cluster_begin_lba = CurrentPartition.LBABegin + BootSector.ReservedSectors + (BootSector.FATCopies * BootSector.SectorsPerFAT);
+            //sectors_per_cluster = BootSector.SectorsPerCluster;
+            //root_dir_first_sector = BootSector.SectorBase;
         }
 
         // ********************************************************************************************
@@ -306,6 +314,14 @@ namespace SDCardAccess
                         Entry.Cluster = (cluster[index +0x1b] << 8) | cluster[index +0x1a];  // Cluster
                         if (BootSector.FatType == eFATType.FAT32) Entry.Cluster |=  (cluster[index +0x15] << 24) | (cluster[index +0x14] << 16);  // 32bit Cluster
                         Entry.FileSize = (cluster[index +0x1f] << 24) | (cluster[index +0x1e] << 16) | (cluster[index +0x1d] << 8) | cluster[index +0x1c];  // file size        
+                        int CreationTime = cluster[index + 0x0e] | (cluster[index + 0x0f] << 8);
+                        int CreationDate = cluster[index + 0x10] | (cluster[index + 0x11] << 8);
+                        int WriteTime = cluster[index + 0x16] | (cluster[index + 0x17] << 8);
+                        int WriteDate = cluster[index + 0x18] | (cluster[index + 0x19] << 8);
+                        Entry.SetCreationDate(CreationDate);
+                        Entry.SetCreationTime(CreationTime);
+                        Entry.SetLastWriteDate(WriteDate);
+                        Entry.SetLastWriteTime(WriteTime);
 
                         directory.Add(Entry);
                     }
