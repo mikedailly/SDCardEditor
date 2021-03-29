@@ -26,7 +26,7 @@ namespace SDCardEditor
             InitializeComponent();
 
             // default (test) SD card path
-            SDCardPath.Text = @"E:\ZXNext_Images\cspect-next-8gb.img";
+            SDCardPath.Text = @"E:\ZXNext_Images\cspect-next-2gb.img";
             CurrentDirLabel.Text = "";
 
 
@@ -210,8 +210,13 @@ namespace SDCardEditor
                 }
             }
         }
+
         #endregion
 
-
+        private void fATViewerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            FATViewer viewer = new FATViewer(global);
+            viewer.Show();
+        }
     }
 }

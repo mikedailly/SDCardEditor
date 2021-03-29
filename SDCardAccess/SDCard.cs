@@ -64,6 +64,25 @@ namespace SDCardAccess
         /// <summary>The Cluster manager and cluster cache</summary>
         ClusterManager ClusterManager;
 
+        ///<summary>Return number of sectors per fat</summary>
+        public int SectorsPerFat
+        {
+            get
+            {
+                if (BootSector == null) return -1;
+                return BootSector.SectorsPerFAT;
+            }
+        }
+
+        ///<summary>sd card FAT format</summary>
+        public eFATType FatType
+        {
+            get
+            {
+                if (BootSector == null) return eFATType.Unknown;
+                return BootSector.FatType;
+            }
+        }
 
         // ********************************************************************************************
         /// <summary>
@@ -132,6 +151,23 @@ namespace SDCardAccess
                 }   
             }
             return s;
+        }
+        // ********************************************************************************************
+        /// <summary>
+        ///     Get a FAT sector
+        /// </summary>
+        /// <param name="_index">which FAT sector to read</param>
+        /// <returns>
+        ///     The FAT sector or null for past the end of FAT
+        /// </returns>
+        // ********************************************************************************************
+        public Sector ReadFATBlock(int _index)
+        {
+            if (BootSector.SectorsPerFAT < _index) return null;
+
+            int sector_index = BootSector.FATSector + _index;
+            Sector sector = SectorManager.ReadSector(sector_index);
+            return sector;
         }
 
         // ********************************************************************************************

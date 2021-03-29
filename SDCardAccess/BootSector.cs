@@ -9,7 +9,9 @@ namespace SDCardAccess
     public enum eFATType
     {
         FAT16,
-        FAT32
+        FAT32,
+
+        Unknown = -1
     }
 
     public class BootSector

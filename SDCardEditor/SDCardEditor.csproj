@@ -49,6 +49,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Basic.cs" />
+    <Compile Include="FATViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FATViewer.Designer.cs">
+      <DependentUpon>FATViewer.cs</DependentUpon>
+    </Compile>
     <Compile Include="FileBuffer.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
@@ -75,6 +81,9 @@
     <Compile Include="TextViewer.Designer.cs">
       <DependentUpon>TextViewer.cs</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="FATViewer.resx">
+      <DependentUpon>FATViewer.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>
