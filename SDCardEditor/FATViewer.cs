@@ -20,6 +20,7 @@ namespace SDCardEditor
         int mMaxCluster = 0;
         Font mFont;
         Sector mCurrentSector;
+        UInt32 ClusterSector = 0xffffffff;
 
         void UpdateMessage()
         {
@@ -63,8 +64,10 @@ namespace SDCardEditor
 
         void PaintFat(Graphics _g)
         {
+            int SectorOffset = (int)mCurrentSector.Number - mCard.BootSector.FATSector;
             if (mCard.FatType == eFATType.FAT16)
             {
+                UInt32 ClusterNum = (UInt32) SectorOffset * 256;
                 SizeF s = _g.MeasureString("FFFF", mFont);
                 int ww = (int)s.Width + 8;
                 int hh = (int)s.Height + 4;
@@ -75,16 +78,24 @@ namespace SDCardEditor
                     for (int x = 0; x < 16; x++)
                     {
                         int xp = x * ww;
-                        _g.DrawRectangle(Pens.Red, xp, yp, ww, hh);
+                        Brush ink = Brushes.Black;
+                        if (ClusterSector == ClusterNum){
+                            _g.FillRectangle(Brushes.Blue, xp, yp, ww, hh);
+                            ink = Brushes.White;
+                        }else{
+                            _g.DrawRectangle(Pens.Red, xp, yp, ww, hh);
+                        }
                         int cluster = mCurrentSector[index] + (mCurrentSector[index + 1] << 8);
                         index += 2;
                         string h = cluster.ToString("X4");
-                        _g.DrawString(h, mFont, Brushes.Black, xp + 4, yp + 4);
+                        _g.DrawString(h, mFont, ink, xp + 4, yp + 4);
+                        ClusterNum++;
                     }
                 }
             }
             else if (mCard.FatType == eFATType.FAT32)
             {
+                UInt32 ClusterNum = (UInt32)SectorOffset * 128;
                 SizeF s = _g.MeasureString("FFFFFFFF", mFont);
                 int ww = (int)s.Width + 8;
                 int hh = (int)s.Height + 4;
@@ -95,11 +106,18 @@ namespace SDCardEditor
                     for (int x = 0; x < 8; x++)
                     {
                         int xp = x * ww;
-                        _g.DrawRectangle(Pens.Red, xp, yp, ww, hh);
+                        Brush ink = Brushes.Black;
+                        if (ClusterSector == ClusterNum){
+                            _g.FillRectangle(Brushes.Blue, xp, yp, ww, hh);
+                            ink = Brushes.White;
+                        }else{
+                            _g.DrawRectangle(Pens.Red, xp, yp, ww, hh);
+                        }
                         UInt32 cluster = (UInt32)mCurrentSector[index] + ((UInt32)mCurrentSector[index + 1] << 8) + ((UInt32)mCurrentSector[index + 2] << 16) + ((UInt32)mCurrentSector[index + 3] << 24);
                         index += 4;
                         string h = cluster.ToString("X8");
-                        _g.DrawString(h, mFont, Brushes.Black, xp + 4, yp + 4);
+                        _g.DrawString(h, mFont, ink, xp + 4, yp + 4);
+                        ClusterNum++;
                     }
                 }
             }

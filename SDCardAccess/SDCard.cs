@@ -53,7 +53,7 @@ namespace SDCardAccess
         public string CurrentDirectory;
 
         /// <summary>Boot sector</summary>
-        BootSector BootSector;
+        public BootSector BootSector;
         /// <summary>The currently selected partition</summary>
         Partition CurrentPartition;
         /// <summary>List of upto 4 partitions</summary>
