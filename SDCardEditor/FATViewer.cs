@@ -76,15 +76,32 @@ namespace SDCardEditor
                     {
                         int xp = x * ww;
                         _g.DrawRectangle(Pens.Red, xp, yp, ww, hh);
-                        int cluster = mCurrentSector[index]+(mCurrentSector[index+1]<<8);
+                        int cluster = mCurrentSector[index] + (mCurrentSector[index + 1] << 8);
                         index += 2;
                         string h = cluster.ToString("X4");
-                        _g.DrawString(h, mFont, Brushes.Black, xp + 4, yp+ 4);
+                        _g.DrawString(h, mFont, Brushes.Black, xp + 4, yp + 4);
                     }
                 }
-            } else
+            }
+            else if (mCard.FatType == eFATType.FAT32)
             {
-
+                SizeF s = _g.MeasureString("FFFFFFFF", mFont);
+                int ww = (int)s.Width + 8;
+                int hh = (int)s.Height + 4;
+                int index = 0;
+                for (int y = 0; y < 16; y++)
+                {
+                    int yp = y * hh;
+                    for (int x = 0; x < 8; x++)
+                    {
+                        int xp = x * ww;
+                        _g.DrawRectangle(Pens.Red, xp, yp, ww, hh);
+                        UInt32 cluster = (UInt32)mCurrentSector[index] + ((UInt32)mCurrentSector[index + 1] << 8) + ((UInt32)mCurrentSector[index + 2] << 16) + ((UInt32)mCurrentSector[index + 3] << 24);
+                        index += 4;
+                        string h = cluster.ToString("X8");
+                        _g.DrawString(h, mFont, Brushes.Black, xp + 4, yp + 4);
+                    }
+                }
             }
         }
 
