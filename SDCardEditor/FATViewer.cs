@@ -126,10 +126,35 @@ namespace SDCardEditor
         private void panel1_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
-            //g.FillRectangle(Brushes.Red, new Rectangle(0, 0, 256, 256));
-
-            //g.DrawString("FFFF", mFont, Brushes.Black, 10, 10);
             PaintFat(g);
+        }
+
+        // *********************************************************************************************************
+        /// <summary>
+        ///     Goto a cluster....
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        // *********************************************************************************************************
+        private void gotoClusterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            NumberDialog d = new NumberDialog();
+            d.ShowDialog();
+
+            int r = d.Result;
+            ClusterSector = (uint) r;
+
+            int scale = 2;
+            if (mCard.FatType == eFATType.FAT32) scale = 4;
+            int clusters_per_sector = 512/ scale;
+            int sect = r / clusters_per_sector;
+            mSector = sect;
+            mCurrentSector = mCard.ReadFATBlock(mSector);
+            vScrollBar1.Value = mSector;
+
+            UpdateMessage();
+            vScrollBar1.Invalidate();
+            panel1.Invalidate();
         }
     }
 }

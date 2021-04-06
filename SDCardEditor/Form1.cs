@@ -215,6 +215,7 @@ namespace SDCardEditor
 
         private void fATViewerToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (global.Card == null) return;
             FATViewer viewer = new FATViewer(global);
             viewer.Show();
         }
