@@ -91,6 +91,37 @@ namespace SDCardAccess
             }
         }
 
+
+        // *********************************************************************************************************
+        /// <summary>
+        ///     Check that the day is valid
+        /// </summary>
+        /// <param name="_year">Year we're checking</param>
+        /// <param name="_month">Month to validate</param>
+        /// <param name="_day">Day to check</param>
+        /// <returns>
+        ///     Clamped day
+        /// </returns>
+        // *********************************************************************************************************
+        int CheckDay(int _year, int _month, int _day)
+        {
+            if (_day < 0) return 0;
+
+            int[] Days = new int[] { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+            if (_month == 2)
+            {
+                float f = (float)_year / 4.0f;
+                if ((f - Math.Floor(f)) != 0)
+                {
+                    if (_day > 29) return 29;
+                    return _day;
+                }
+            }
+            _month--;
+            if (_day > Days[_month]) _day = Days[_month];
+            return _day;
+        }
+
         // *********************************************************************************************************
         /// <summary>
         ///     Set actual time on a DateTime
@@ -110,6 +141,16 @@ namespace SDCardAccess
             int day = _datetime.Day;
             int month = _datetime.Month;
             int year = _datetime.Year;
+
+            if (month > 12) month = 12;
+            if (month < 0) month = 0;
+            if (hours > 23) hours = 23;
+            if (hours < 0) hours = 0;
+            if (minutes > 59) minutes = 59;
+            if (minutes < 0) minutes = 0;
+            if (seconds > 59) seconds = 59;
+            if (seconds < 0) seconds = 0;
+            day = CheckDay(year, month, day);
 
             _datetime = new DateTime(year, month, day, hours, minutes, seconds, 0);
             return _datetime;
@@ -165,6 +206,17 @@ namespace SDCardAccess
             int sec = _datetime.Second;
             int min = _datetime.Minute;
             int hour = _datetime.Hour;
+
+            if (month > 12) month = 12;
+            if (month < 0) month = 0;
+            if (hour > 23) hour = 23;
+            if (hour < 0) hour = 0;
+            if (min > 59) min = 59;
+            if (min < 0) min = 0;
+            if (sec > 59) sec = 59;
+            if (sec < 0) sec = 0;
+            day = CheckDay(year, month, day);
+
             _datetime = new DateTime(year, month, day, hour, min, sec, 0);
             return _datetime;
         }

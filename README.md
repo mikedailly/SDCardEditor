@@ -7,6 +7,7 @@ No warranty is given to this project, and you use it at your own risk. A link in
 
 If you extend it, improve it, add new or missing features, please consider pushing back all changes for others to benefit from. This is again appreciated, but not required. Any accepted changes will be added to the contributors list.
 
+Find it at: https://github.com/mikedailly/SDCardEditor
 
 Contributors
 ------------
