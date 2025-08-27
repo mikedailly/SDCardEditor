@@ -26,7 +26,9 @@ namespace SDCardEditor
             InitializeComponent();
 
             // default (test) SD card path
-            SDCardPath.Text = @"E:\ZXNext_Images\cspect-next-2gb.img";
+            //SDCardPath.Text = @"E:\ZXNext_Images\cspect-next-2gb.img";
+            SDCardPath.Text = @"C:\source\ZXSpectrum\_Demos\_NEXTROM\card.img";
+            //SDCardPath.Text = @"C:\source\ZXSpectrum\_Demos\320_L2_TURRICAN.nex";
             CurrentDirLabel.Text = "";
 
 
@@ -171,6 +173,7 @@ namespace SDCardEditor
                         ImageViewer viewer = new ImageViewer(data, Path.GetExtension(file).ToLower());
                         viewer.Show();
                     }
+                    /*
                     else if (Path.GetExtension(file).ToLower() == ".bas")
                     {
                         // simple image viewer
@@ -179,8 +182,8 @@ namespace SDCardEditor
                         Basic.Basic2Text(basic_file);
 
                         //TextViewer.View(data);
-                    }
-                        break;                        
+                    }*/
+                    break;                        
                 }
             }
         }

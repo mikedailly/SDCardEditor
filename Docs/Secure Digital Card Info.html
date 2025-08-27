@@ -1,0 +1,871 @@
+
+<!-- saved from url=(0042)http://chlazza.nfshost.com/sdcardinfo.html -->
+<html lang="en"><script>(function main() {
+    // Create enabled event
+    function fireEnabledEvent() {
+        // If gli exists, then we are already present and shouldn't do anything
+        if (!window.gli) {
+            setTimeout(function () {
+                var enabledEvent = document.createEvent("Event");
+                enabledEvent.initEvent("WebGLEnabledEvent", true, true);
+                document.dispatchEvent(enabledEvent);
+            }, 0);
+        } else {
+            //console.log("WebGL Inspector already embedded on the page - disabling extension");
+        }
+    };
+
+    // Grab the path root from the extension
+    document.addEventListener("WebGLInspectorReadyEvent", function (e) {
+        var pathElement = document.getElementById("__webglpathroot");
+        if (window["gliloader"]) {
+            gliloader.pathRoot = pathElement.innerText;
+        } else {
+            // TODO: more?
+            window.gliCssUrl = pathElement.innerText + "gli.all.css";
+        }
+    }, false);
+
+    // Rewrite getContext to snoop for webgl
+    var originalGetContext = HTMLCanvasElement.prototype.getContext;
+    if (!HTMLCanvasElement.prototype.getContextRaw) {
+        HTMLCanvasElement.prototype.getContextRaw = originalGetContext;
+    }
+    HTMLCanvasElement.prototype.getContext = function () {
+        var ignoreCanvas = this.internalInspectorSurface;
+        if (ignoreCanvas) {
+            return originalGetContext.apply(this, arguments);
+        }
+
+        var result = originalGetContext.apply(this, arguments);
+        if (result == null) {
+            return null;
+        }
+
+        var contextNames = ["moz-webgl", "webkit-3d", "experimental-webgl", "webgl", "3d"];
+        var requestingWebGL = contextNames.indexOf(arguments[0]) != -1;
+        if (requestingWebGL) {
+            // Page is requesting a WebGL context!
+            fireEnabledEvent(this);
+
+            // If we are injected, inspect this context
+            if (window.gli) {
+                if (gli.host.inspectContext) {
+                    // TODO: pull options from extension
+                    result = gli.host.inspectContext(this, result);
+                    // NOTE: execute in a timeout so that if the dom is not yet
+                    // loaded this won't error out.
+                    window.setTimeout(function() {
+                        var hostUI = new gli.host.HostUI(result);
+                        result.hostUI = hostUI; // just so we can access it later for debugging
+                    }, 0);
+                }
+            }
+        }
+
+        return result;
+    };
+})();</script><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title>Secure Digital Card Info</title>
+		
+		<link href="./Secure Digital Card Info_files/project.css" rel="stylesheet" type="text/css">
+
+		<style type="text/css">
+			table {
+				background-color: white;
+			}
+			th {
+				background-color: #F2F2F2;
+			}
+			
+			td.yes {
+				background-color: #90FF90;
+			}
+			td.no {
+				background-color: #FF9090;
+			}
+			td.opt {
+				background-color: #FFEEDD;
+			}
+		</style>
+	</head>
+	<body>
+
+	<h1>Secure Digital (SD) Card Spec and Info</h1>
+	<a class="mainlink" href="http://chlazza.nfshost.com/index2.html"><img align="right" border="0" alt="Click this image to return to the main index." src="./Secure Digital Card Info_files/blackpatch.png"></a>	
+
+	If you're looking for a run down of the features and history of SD or microSD cards, go read the appropriate Wikipedia article (<a href="http://en.wikipedia.org/wiki/Secure_Digital">here</a> and <a href="http://en.wikipedia.org/wiki/MicroSD">here</a>). This page is just going to concern itself with attached these fingernail-sized chunks of storage to commodity microcontrolers.<br>
+	The SD standard is a mess of extensions and versions and speed classes - in general, just be aware that there are (as of March 2010) three general types of SD cards: SD, SDHC (Secure Digital High Capacity), and SDXC (Secure Digital eXtended Capacity) and that these types are available in the standard SD, the miniSD, and the microSD form factors.<br>
+This page will only take about connecting to SD cards that support the SPI interface.<br>
+
+	
+	<h2>Resources and Credit</h2>
+	<a href="http://www.transcendusa.com/Products/ModDetail.asp?ModNo=6&amp;SpNo=-100&amp;LangNo=0">Transcend SD card info page</a><br>
+	<a href="http://www.transcendusa.com/support/dlcenter/datasheet/TSxxSDC.pdf">Transcend SD card datasheet sheet</a> (<a href="http://chlazza.nfshost.com/docs/TSxxSDC.pdf">Local Copy</a>)<br>
+	<a href="http://www.transcendusa.com/Products/ModDetail.asp?ModNo=96&amp;SpNo=-100&amp;LangNo=0">Transcend microSD card info page</a><br>
+	<a href="http://www.transcendusa.com/support/dlcenter/datasheet/TSxxUSD.pdf">Transcend microSD card datasheet sheet</a> (<a href="http://chlazza.nfshost.com/docs/TSxxUSD.pdf">Local Copy</a>)<p>
+
+	<a href="http://www.cs.ucr.edu/~amitra/sdcard/ProdManualSDCardv1.9.pdf">SanDisk Secure Digital Card Product Manual, Version 1.9, Document No. 80-13-00169</a> (<a href="http://chlazza.nfshost.com/docs/ProdManualSDCardv1.9.pdf">Local copy</a>)</p><p>
+
+	<del datetime="2010-11-1312:02:50PST"><a href="http://www.sdcard.org/developers/tech/sdcard/">SD Association SD Card Spec Page</a><br>
+	<a href="http://www.sdcard.org/developers/tech/sdcard/pls/">SD Association SD Specifications, Physical Layer Simplified Specification, Version 2.00</a> (<a href="http://chlazza.nfshost.com/docs/Simplified_Physical_Layer_Spec.pdf">Local Copy</a>)</del></p><p>
+
+	<a href="http://www.sdcard.org/developers/tech/sdcard/pls/simplified_specs/">SD Association SD Simplified Specifications Page</a><br>
+	<a href="http://www.sdcard.org/developers/tech/sdcard/pls/simplified_specs/Part_1_Physical_Layer_Simplified_Specification_Ver3.01_Final_100518.pdf">Physical Layer Simplified Specification, Version 3.01</a> (<a href="http://chlazza.nfshost.com/docs/Part_1_Physical_Layer_Simplified_Specification_Ver3.01_Final_100518.pdf">Local Copy</a>)</p><p>
+
+	Maxim IC <a href="http://www.maxim-ic.com/app-notes/index.mvp/id/3969">App Note 3969</a> - "SD Media Format Expands the MAXQ2000's Space for Nonvolatile Data Storage"</p><p>
+
+	Big thanks to <b>David E.</b> for a flowchart correction and programing assistance!</p><p>pro
+
+
+	</p><h2>Pinouts</h2>
+	Note: Diagrams somewhat to scale, not exact. Illustrative purposes only. Pin numbering is arbitrary. May not be consistent across all datasheets.<br>
+	Key: S: Power Supply; I: Input; O: Output; PP: Push-Pull<br>
+	<table width="100%">
+		<tbody><tr>
+			<td><img src="./Secure Digital Card Info_files/sdcard.png" alt="Pin number and size diagram for Secure Digital (SD) memory card format"></td>
+			<td>
+	<table style="background-color:white" border="1" cellpadding="2" cellspacing="0" width="100%">
+		<!--Table header-->
+		<tbody><tr>
+			<th colspan="7">SD Card</th>
+		</tr>
+		<tr>
+			<th rowspan="2">Pin No.</th>
+			<th colspan="3">SD Mode</th>
+			<th colspan="3">SPI Mode</th>
+		</tr>
+		<tr>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+		</tr>
+
+		<!--Data-->
+		<tr>
+			<th>1</th>
+			<td>CD/DAT</td>
+			<td>I/O/PP</td>
+			<td>Card Detect/Data Line [Bit 3]</td>
+			<td>CS</td>
+			<td>I</td>
+			<td>Chip Select (active low)</td>
+		</tr>
+		<tr>
+			<th>2</th>
+			<td>CMD</td>
+			<td>PP</td>
+			<td>Command/Response</td>
+			<td>DI/MOSI</td>
+			<td>I</td>
+			<td>Data In/Master Out Slave In</td>
+		</tr>
+		<tr>
+			<th>3</th>
+			<td>Gnd1/Vss1</td>
+			<td>S</td>
+			<td>Ground</td>
+			<td>GND/VSS</td>
+			<td>S</td>
+			<td>Ground</td>
+		</tr>
+		<tr>
+			<th>4</th>
+			<td>Vdd</td>
+			<td>S</td>
+			<td>Power (2.7V to 3.6V DC)</td>
+			<td>VDD</td>
+			<td>S</td>
+			<td>Power (2.7V to 3.6V DC)</td>
+		</tr>
+		<tr>
+			<th>5</th>
+			<td>CLK</td>
+			<td>I</td>
+			<td>Clock</td>
+			<td>SCLK</td>
+			<td>I</td>
+			<td>Clock</td>
+		</tr>
+		<tr>
+			<th>6</th>
+			<td>Gnd2/Vss2</td>
+			<td>S</td>
+			<td>Ground</td>
+			<td>Gnd2/Vss2</td>
+			<td>S</td>
+			<td>Ground</td>
+		</tr>
+		<tr>
+			<th>7</th>
+			<td>DAT0</td>
+			<td>I/O/PP</td>
+			<td>Data Line [Bit 0]</td>
+			<td>DO/MISO</td>
+			<td>O/PP</td>
+			<td>Data Out/Master In Slave Out</td>
+		</tr>
+		<tr>
+			<th>8</th>
+			<td>DAT1</td>
+			<td>I/O/PP</td>
+			<td>Data Line [Bit 1]</td>
+			<td>RSV</td>
+			<td></td>
+			<td>Reserved</td>
+		</tr>
+		<tr>
+			<th>9</th>
+			<td>DAT2</td>
+			<td>I/O/PP</td>
+			<td>Data Line [Bit 2]</td>
+			<td>RSV</td>
+			<td></td>
+			<td>Reserved</td>
+		</tr>
+	</tbody></table>
+			</td>
+		</tr>
+		<tr>
+			<td><img src="./Secure Digital Card Info_files/microsdcard.png" alt="Pin number and size diagram for &#39;micro&#39; Secure Digital (microSD) memory card format"></td>
+			<td>
+	<table style="background-color:white" border="1" cellpadding="2" cellspacing="0" width="100%">
+		<!--Table header-->
+		<tbody><tr>
+			<th colspan="7">microSD Card</th>
+		</tr>
+		<tr>
+			<th rowspan="2">Pin No.</th>
+			<th colspan="3">SD Mode</th>
+			<th colspan="3">SPI Mode</th>
+		</tr>
+		<tr>
+			<th>Name</th>
+			<th><b>Type</b></th>
+			<th>Description</th>
+			<th>Name</th>
+			<th>Type</th>
+			<th>Description</th>
+		</tr>
+
+		<!--Data-->
+		<tr>
+			<th>1</th>
+			<td>DAT2</td>
+			<td>I/O/PP</td>
+			<td>Data Line [Bit 2]</td>
+			<td>RSV</td>
+			<td></td>
+			<td>Reserved</td>
+		</tr>
+		<tr>
+			<th>2</th>
+			<td>CD/DAT3</td>
+			<td>I/O/PP</td>
+			<td>Card Detect / Data Line [Bit 3]</td>
+			<td>CS</td>
+			<td>I</td>
+			<td>Chip Select</td>
+		</tr>
+		<tr>
+			<th>3</th>
+			<td>CMD</td>
+			<td>PP</td>
+			<td>Command/Response</td>
+			<td>DI/MOSI</td>
+			<td>I</td>
+			<td>Data In/Master Out Slave In</td>
+		</tr>
+		<tr>
+			<th>4</th>
+			<td>Vdd</td>
+			<td>S</td>
+			<td>Power</td>
+			<td>Vdd</td>
+			<td>S</td>
+			<td>Power</td>
+		</tr>
+		<tr>
+			<th>5</th>
+			<td>CLK</td>
+			<td>I</td>
+			<td>Clock</td>
+			<td>SCLK</td>
+			<td>I</td>
+			<td>Clock</td>
+		</tr>
+		<tr>
+			<th>6</th>
+			<td>Gnd/Vss</td>
+			<td>S</td>
+			<td>Ground</td>
+			<td>Gnd/Vss</td>
+			<td>S</td>
+			<td>Ground</td>
+		</tr>
+		<tr>
+			<th>7</th>
+			<td>DAT0</td>
+			<td>I/O/PP</td>
+			<td>Data Line [Bit 0]</td>
+			<td>DO/MISO</td>
+			<td>O/PP</td>
+			<td>Data Out/Master In Slave Out</td>
+		</tr>
+		<tr>
+			<th>8</th>
+			<td>DAT1</td>
+			<td>I/O/PP</td>
+			<td>Data Line [Bit 1]</td>
+			<td>RSV</td>
+			<td></td>
+			<td>Reserved</td>
+		</tr>
+	</tbody></table>
+				</td>
+			</tr>
+		</tbody></table>
+		<p>
+
+
+	</p><h2>Other Info</h2>
+	The information and layout of the following table was lifted from the Wikipedia page on the <a href="http://en.wikipedia.org/wiki/MultiMediaCard">MultiMediaCard card standard</a>:<br>
+
+	<table border="1" cellpadding="2" cellspacing="0" width="430">
+		<tbody><tr>
+			<th>Type</th>
+			<th>MMC</th>
+			<th>SD</th>
+			<th>microSD</th>
+		</tr>
+		<tr>
+			<th>SPI Mode</th>
+			<td class="opt">Optional</td>
+			<td class="yes">Yes</td>
+			<td class="opt">Optional</td>
+		</tr>
+		<tr>
+			<th>1 bit mode</th>
+			<td class="yes">Yes</td>
+			<td class="yes">Yes</td>
+			<td class="yes">Yes</td>
+		</tr>
+		<tr>
+			<th>4 bit mode</th>
+			<td class="no">No</td>
+			<td class="opt">Optional</td>
+			<td class="opt">Optional</td>
+		</tr>
+		<tr>
+			<th>Xfer clock</th>
+			<td>0–20 MHz</td>
+			<td>0–25 MHz - 0–50 MHz</td>
+			<td>0–25 MHz?</td>
+		</tr>
+		<tr>
+			<th>Max Transfer</th>
+			<td>20 Mbit/s</td>
+			<td>100 Mbit/s - 200 Mbit/s</td>
+			<td>100 Mbit/s</td>
+		</tr>
+		<tr>
+			<th>Max SPI Transfer</th>
+			<td>20 Mbit/s</td>
+			<td>25 Mbit/s</td>
+			<td>25 Mbit/s</td>
+		</tr>
+		<tr>
+			<th>DRM Aval.</th>
+			<td>No</td>
+			<td>Yes</td>
+			<td>Yes</td>
+		</tr>
+	</tbody></table> 
+
+
+	<h2>Hardware</h2>
+	<a href="http://chlazza.nfshost.com/imgs/img_2467.jpg"><img src="./Secure Digital Card Info_files/img_2467_thumb.jpg" alt=""></a>
+	<a href="http://chlazza.nfshost.com/imgs/img_2666.jpg"><img src="./Secure Digital Card Info_files/img_2666_thumb.jpg" alt=""></a>
+	<a href="http://chlazza.nfshost.com/imgs/img_2670.jpg"><img src="./Secure Digital Card Info_files/img_2670_thumb.jpg" alt=""></a>
+	<a href="http://chlazza.nfshost.com/imgs/img_2672.jpg"><img src="./Secure Digital Card Info_files/img_2672_thumb.jpg" alt=""></a><br>
+	I'm trying to prototype an SPI bus interface with a <a href="http://www.dlpdesign.com/usb/usb245.shtml">DLP-USB245M</a> (<a href="http://www.dlpdesign.com/usb/dlp-usb245mv15.pdf">datasheet</a>, <a href="http://chlazza.nfshost.com/docs/dlp-usb245mv15.pdf">local copy</a>) used in bitbang mode with the <a href="http://www.intra2net.com/en/developer/libftdi/">libftdi</a> library. I'm not going to post details at the moment, because I'm not even sure this approch will work - there is a lot of inconsistancy in the pulse lengths of the outputs. It <i>shouldn't</i> matter (being a clocked bus and all) but who knows.<br>
+The SD socket is a 3M <b>SD-RSMT-2-MQ-WF</b> (<a href="http://search.digikey.com/scripts/DkSearch/dksus.dll?Detail&amp;name=3M5646CT-ND">3M5646CT-ND</a> on Digikey); <a href="http://multimedia.3m.com/mws/mediawebserver?66666UuZjcFSLXTtmXftMXMXEVuQEcuZgVs6EVs6E666666--">datasheet</a>, <a href="http://chlazza.nfshost.com/docs/SD-RSMT-2-MQ-WF.pdf">local copy</a>. Fortuitously, the data pins are 2.50mm (0.098") apart which was close enough to 0.1" to line up with a standard header. I <del>mangled</del> removed the Write Protect and Card Detect pins - they were much closer together and weren't strictly needed.
+	
+
+	<h2>Serial Peripheral Interface (SPI) Bus </h2>
+	If you don't know what an SPI bus is, go read <a href="http://en.wikipedia.org/wiki/SPI_bus">the Wikipedia artical</a>.<br>
+	The bus lines are latched on the rising edge of the clock line. The clock line starts low. (CPHA=0 and CPOL=0 according to Freescale's SPI Block Guide and Wikipedia.) The cards internal state machine starts counting clock cycles when the Chip Select line is pulled low. An idle bus (either direction) is denoted with the line being held high. All command tokens and data blocks are built from 8-bit words (aka: bytes).
+
+
+	<h2>SD Card SPI Data Transfer Protocol</h2>
+	As mentioned above, all data sent through the SPI bus are built around the byte - some items may have padding, but the host and card will alwasy send/recieve some multiple of 8 bits.<br>
+	All command tokens are six bytes long. The card will always respond to every command token with a response token of some kind.<p>
+
+	Command token format, lifted from the Simplified Physical Layer v3.01 spec:<br>
+	<table border="1" cellpadding="2" cellspacing="0">
+		<tbody><tr>
+			<th></th>
+			<th>Start Bit</th>
+			<th>Transmission Bit</th>
+			<th>Command Bit Pattern</th>
+			<th>Argument</th>
+			<th>CRC7</th>
+			<th>End Bit</th>
+		</tr>
+		<tr>
+			<th>Bit position</th>
+			<td>47</td>
+			<td>46</td>
+			<td>[45:40]</td>
+			<td>[39:8]</td>
+			<td>[7:1]</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<th>Width (Bits)</th>
+			<td>1</td>
+			<td>1</td>
+			<td>6</td>
+			<td>32</td>
+			<td>7</td>
+			<td>1</td>
+		</tr>
+		<tr>
+			<th>Value</th>
+			<td>0</td>
+			<td>1</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td>1</td>
+		</tr>
+
+	</tbody></table></p><p>
+
+	The list of supported commands in SPI mode is a subset of the list of commands the card supports in SD mode. All stuff bits should be set to '0'.<br>
+	List of commands in SPI mode, lifted from the Simplified Physical Layer v3.01 spec:<br>
+	<table border="1" cellpadding="2" cellspacing="0">
+		<tbody><tr>
+			<th>CMD INDEX</th>
+			<th>Bit Pattern</th>
+			<th>Mnemonic</th>
+			<th>Argument</th>
+			<th>Response Format</th>
+			<th>Command Description</th>
+		</tr>
+		<tr>
+			<td>CMD0</td>
+			<td>000000</td>
+			<td>GO_IDLE_STATE</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Resets the SD Memory Card</td>
+		</tr>
+		<tr>
+			<td>CMD1  (note 1)</td>
+			<td>000001</td>
+			<td>SEND_OP_COND</td>
+			<td>[31] Reserved<br>[30] HCS<br>[29:0] Reserved</td>
+			<td>R1</td>
+			<td>Sends host capacity support information and activates the card's initialization process.<br>HCS is effective when card receives SEND_IF_COND command.<br>Reserved bits shall be set to '0'.</td>
+		</tr>
+		<tr>
+			<td>CMD6 (note 8)</td>
+			<td></td>
+			<td>SWITCH_FUNC</td>
+			<td>[31] Mode (0 = Check function, 1 = Switch function)<br>[30:24] reserved (All ’0’)<br>[23:20] reserved for function group 6 (All ’0’ or 0xF)<br>[19:16] reserved for function group 5 (All ’0’ or 0xF)<br>[15:12] reserved for function group 4 (All ’0’ or 0xF)<br>[11:8] reserved for function group 3 (All ’0’ or 0xF)<br>[7:4] function group 2 for command system<br>[3:0] function group 1 for access mode<br></td>
+			<td>R1</td>
+			<td>Checks switchable function (mode 0) and switches card function (mode 1).<br>See Chapter 4.3.10 of the Physical Layer Simplified Spec.</td>
+		</tr>
+		<tr>
+			<td>CMD8 (note 9)</td>
+			<td>001000</td>
+			<td>SEND_IF_COND</td>
+			<td>[31:12] Reserved Bits<br>[11:8] Supply voltage (VHS)<br>[7:0] Check Pattern</td>
+			<td>R7</td>
+			<td>Sends SD Memory Card interface condition that includes Host Supply Voltage (VHS) information and asks the accessed card whether card can operate in supplied voltage range.<br>Reserved bits shall be set to '0'.</td>
+		</tr>
+		<tr>
+			<td>CMD9</td>
+			<td></td>
+			<td>SEND_CSD</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Asks the selected card to send its card-specific data (CSD)</td>
+		</tr>
+		<tr>
+			<td>CMD10</td>
+			<td></td>
+			<td>SEND_CID</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Asks the selected card to send its card identification (CID)</td>
+		</tr>
+		<tr>
+			<td>CMD12</td>
+			<td></td>
+			<td>STOP_TRANSMISSION</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1b (note 5)</td>
+			<td>Forces the card to stop transmission in Multiple Block Read Operation</td>
+		</tr>
+		<tr>
+			<td>CMD13</td>
+			<td></td>
+			<td>SEND_STATUS</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R2</td>
+			<td>Asks the selected card to send its status register.</td>
+		</tr>
+		<tr>
+			<td>CMD16</td>
+			<td>010000</td>
+			<td>SET_BLOCKLEN</td>
+			<td>[31:0] Block Length</td>
+			<td>R1</td>
+			<td>Sets a block length (in bytes) for all following block commands (read and write) (note 2) of a Standard Capacity Card.<br>Block length of the read and write commands are fixed to 512 bytes in SDHC and SDXC cards.<br>The length of LOCK_UNLOCK command is set by this command in all cards, regardless of capacity.</td>
+		</tr>
+		<tr>
+			<td>CMD17</td>
+			<td></td>
+			<td>READ_SINGLE_BLOCK</td>
+			<td>[31:0] Data Address (note 10)</td>
+			<td>R1</td>
+			<td>Reads a block of the size selected by SET_BLOCKLEN command (note 3)</td>
+		</tr>
+		<tr>
+			<td>CMD18</td>
+			<td></td>
+			<td>READ_MULTIPLE_BLOCK</td>
+			<td>[31:0] Data Address (note 10)</td>
+			<td>R1</td>
+			<td>Continuously transfers data blocks from card to host until interrupted by a STOP_TRANSMISSION command.</td>
+		</tr>
+		<tr>
+			<td>CMD24</td>
+			<td></td>
+			<td>WRITE_BLOCK</td>
+			<td>[31:0] Data Address (note 10)</td>
+			<td>R1</td>
+			<td>Writes a block of the size selected by the SET_BLOCKLEN command. (note 4)</td>
+		</tr>
+		<tr>
+			<td>CMD25</td>
+			<td></td>
+			<td>WRITE_MULTIPLE_BLOCK</td>
+			<td>[31:0] Data Address (note 10)</td>
+			<td>R1</td>
+			<td>Continuously writes blocks of data until 'Stop Tran' token is sent (instead of 'Start Block').</td>
+		</tr>
+		<tr>
+			<td>CMD27</td>
+			<td></td>
+			<td>PROGRAM_CSD</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Programming of the programmable bits of the CSD.</td>
+		</tr>
+		<tr>
+			<td class="opt">CMD28</td>
+			<td class="opt"></td>
+			<td class="opt">SET_WRITE_PROT</td>
+			<td class="opt">[31:0] Data Address</td>
+			<td class="opt">R1b (note 5)</td>
+			<td class="opt">If the card has write protection features, this command sets the write protection bit of the addressed group. The properties of write protection are coded in the card specific data (WP_GRP_SIZE).<br>SDHC and SDXC cards do not support this command.</td>
+		</tr>
+		<tr>
+			<td class="opt">CMD29</td>
+			<td class="opt"></td>
+			<td class="opt">CLR_WRITE_PROT</td>
+			<td class="opt">[31:0] Data Address</td>
+			<td class="opt">R1b (note 5)</td>
+			<td class="opt">If the card has write protection features, this command clears the write protection bit of the addressed group.<br>SDHC and SDXC cards do not support this command.</td>
+		</tr>
+		<tr>
+			<td class="opt">CMD30</td>
+			<td class="opt"></td>
+			<td class="opt">SEND_WRITE_PROT</td>
+			<td class="opt">[31:0] Write protect data address</td>
+			<td class="opt">R1</td>
+			<td class="opt">If the card has write protection features, this command asks the card to send the status of the write protection bits. (note 6)<br>SDHC and SDXC cards do not support this command.</td>
+		</tr>
+		<tr>
+			<td>CMD32</td>
+			<td></td>
+			<td>ERASE_WR_BLK_START_ADDR</td>
+			<td>[31:0] Data Address (note 10)</td>
+			<td>R1</td>
+			<td>Sets the address of the first write block to be erased.</td>
+		</tr>
+		<tr>
+			<td>CMD33</td>
+			<td></td>
+			<td>ERASE_WR_BLK_END_ADDR</td>
+			<td>[31:0] Data Address (note 10)</td>
+			<td>R1</td>
+			<td>Sets the address of the last write block of the continuous range to be erased.</td>
+		</tr>
+		<tr>
+			<td>CMD38</td>
+			<td></td>
+			<td>ERASE</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1b (note 5)</td>
+			<td>Erases all previously selected write blocks</td>
+		</tr>
+		<tr>
+			<td>CMD42</td>
+			<td></td>
+			<td>LOCK_UNLOCK</td>
+			<td>[31:0] Reserved bits (set all to 0)</td>
+			<td>R1</td>
+			<td>Used to Set/Reset the Password or lock/unlock the card. A transferred data block includes all the command details - refer to Chapter 4.3.7 of the Physical Layer Simplified Spec v3.01.<br>The size of the Data Block is defined with SET_BLOCK_LEN command.<br>Reserved bits in the argument and in Lock Card Data Structure shall be set to 0.</td>
+		</tr>
+		<tr>
+			<td>CMD55</td>
+			<td></td>
+			<td>APP_CMD</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Defines to the card that the next command is an application specific command rather than a standard command.</td>
+		</tr>
+		<tr>
+			<td>CMD56</td>
+			<td></td>
+			<td>GEN_CMD</td>
+			<td>[31:1] Stuff Bits<br>[0] RD/WR (note 7)</td>
+			<td>R1</td>
+			<td>Used either to transfer a Data Block to the card or to get a Data Block from the card for general purpose/application specific commands. In case of Standard Capacity SD Memory Card, the size of the Data Block shall be defined with SET_BLOCK_LEN command. Block length of this command is fixed to 512-byte in SDHC and SDXC cards.</td>
+		</tr>
+		<tr>
+			<td>CMD58</td>
+			<td></td>
+			<td>READ_OCR</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R3</td>
+			<td>Reads the OCR register of a card. CCS bit is assigned to OCR[30].</td>
+		</tr>
+		<tr>
+			<td>CMD59</td>
+			<td></td>
+			<td>CRC_ON_OFF</td>
+			<td>[31:1] Stuff Bits<br>[0] CRC option</td>
+			<td>R1</td>
+			<td>Turns the CRC option on or off.<br>A '1' turns the option on, a '0' will turn it off.</td>
+		</tr>
+	</tbody></table>
+	Notes:<br>
+	<!--TODO: Linkify these.-->
+	1. CMD1 is valid command for the Thin (1.4mm) Standard Size SD Memory Card only if used after re-initializing a card (not after power on reset).<br>
+	2. The default block length is as specified in the CSD.<br>
+	3. The data transferred shall not cross a physical block boundary unless READ_BLK_MISALIGN is set in the CSD.<br>
+	4. The data transferred shall not cross a physical block boundary unless WRITE_BLK_MISALIGN is set in the CSD.<br>
+	5. R1b: R1 response with an optional trailing busy signal<br>
+	6. 32 write protection bits (representing 32 write protect groups starting at the specified address) followed by 16 CRC bits are transferred in a payload format via the data line. The last (least significant) bit of the protection bits corresponds to the first addressed group. If the addresses of the last groups are outside the valid range, then the corresponding write protection bits shall be set to zero.<br>
+	7. RD/WR_: '1' the Host shall get a block of data from the card. '0' the host sends block of data to the card.<br>
+	8. This command was added in spec version 1.10<br>
+	9. This command is added in spec version 2.00<br>
+	10. SDSC Card (CCS=0) uses byte unit address and SDHC and SDXC Cards (CCS=1) use block unit address (512 bytes unit).<br>
+
+	</p><p>
+	Note CMD55 (APP_CMD) - the following table lists most of the application specific commands that may be run after CMD55 in SPI mode. (Commands omitted involved "SD security applications" and don't appear to be freely avalable.)<br>
+	This list was lifted from the Simplified Physical Layer v3.01 spec.<br>
+	<table border="1" cellpadding="2" cellspacing="0">
+		<tbody><tr>
+			<th>ACMD INDEX</th>
+			<th>Bit Pattern</th>
+			<th>Mnemonic</th>
+			<th>Argument</th>
+			<th>Response Format</th>
+			<th>Command Description</th>
+		</tr>
+		<tr>
+			<td>ACMD13</td>
+			<td></td>
+			<td>SD_STATUS</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R2</td>
+			<td>Send the cards status register.<br>Note: The spec says that the card (in SPI mode) will respond with an R2 token, but also states it will return the fields in Table 4-38 (of the Physical Layer Simplified Spec v3.01) - which is a 512 bit block.</td>
+		</tr>
+		<tr>
+			<td>ACMD22</td>
+			<td></td>
+			<td>SEND_NUM_WR_BLOCKS</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Send the numbers of the well written (without errors) blocks. Responds with 32-bit+CRC data block.</td>
+		</tr>
+		<tr>
+			<td>ACMD23</td>
+			<td></td>
+			<td>SET_WR_BLK_ERASE_COUNT</td>
+			<td>[31:23] Stuff Bits<br>[22:0] Number of blocks</td>
+			<td>R1</td>
+			<td>Set the number of write blocks to be pre-erased before writing (to be used for faster Multiple Block WR command).<br>'1'=default (one wr block) (note 2).</td>
+		</tr>
+		<tr>
+			<td>ACMD41</td>
+			<td></td>
+			<td>SD_SEND_OP_COND</td>
+			<td>[31] Reserved Bit<br>[30] HCS<br>[29:0] Reserved Bits</td>
+			<td>R1</td>
+			<td>Sends host capacity support information and activates the card's initialization process.<br>Reserved bits shall be set to '0'.</td>
+		</tr>
+		<tr>
+			<td>ACMD42</td>
+			<td></td>
+			<td>SET_CLR_CARD_DETECT</td>
+			<td>[31:1] Stuff Bits<br>[0] set_cd</td>
+			<td>R1</td>
+			<td>Connect ('1')/Disconnect ('0') the 50 KOhm pull-up resistor on CS (pin 1) of the card. The pull-up may be used for card detection.</td>
+		</tr>
+		<tr>
+			<td>ACMD51</td>
+			<td></td>
+			<td>SEND_SCR</td>
+			<td>[31:0] Stuff Bits</td>
+			<td>R1</td>
+			<td>Reads the SD Configuration Register (SCR).</td>
+		</tr>
+	</tbody></table>
+Table notes: (2) Stop Tran Token shall be used to stop the transmission in Write Multiple Block whether the pre-erase (ACMD23) feature is used or not.<br>
+
+	</p><p>
+	When the above commands are issued, the SD card will always respond with one of the following response token.</p><p>
+	<b>Response R1</b><br>
+	One byte in width.<br>
+	<table border="1" cellpadding="2" cellspacing="0">
+		<tbody><tr>
+			<th>Bit</th>
+			<th></th>
+			<th></th>
+		</tr>
+		<tr>
+			<th>0</th>
+			<td>In idle state</td>
+			<td>The card is in idle state and running the initializing process.</td>
+		</tr>
+		<tr>
+			<th>1</th>
+			<td>Erase reset</td>
+			<td>An erase sequence was cleared before executing because an out of erase sequence command was received.</td>
+		</tr>
+		<tr>
+			<th>2</th>
+			<td>Illegal command</td>
+			<td>An illegal command code was detected.</td>
+		</tr>
+		<tr>
+			<th>3</th>
+			<td>Communication CRC error</td>
+			<td>The CRC check of the last command failed.</td>
+		</tr>
+		<tr>
+			<th>4</th>
+			<td>Erase sequence error</td>
+			<td>An error in the sequence of erase commands occurred.</td>
+		</tr>
+		<tr>
+			<th>5</th>
+			<td>Address error</td>
+			<td>A misaligned address that did not match the block length was used in the command.</td>
+		</tr>
+		<tr>
+			<th>6</th>
+			<td>Parameter error</td>
+			<td>The command’s argument (e.g. address, block length) was outside the allowed range for this card.</td>
+		</tr>
+		<tr>
+			<th>7</th>
+			<td>MSB</td>
+			<td>Always Zero</td>
+		</tr>
+	</tbody></table></p><p>
+
+	<b>Response R1b</b><br>
+	R1b is the same as R1, except the response token may be followed by zero or more bytes set to zero. This is a busy signal - when the user receives a non-zero byte the card is ready for another command.</p><p>
+
+	<b>Response R2</b><br>
+	Two bytes in width. The first byte sent is identical to R1. The second byte sent is as follows:<br>
+	<table border="1" cellpadding="2" cellspacing="0">
+		<tbody><tr>
+			<th>Bit</th>
+			<th></th>
+			<th></th>
+		</tr>
+		<tr>
+			<th>0</th>
+			<td>Card is locked</td>
+			<td>Set when the card is locked by the user. Reset when it is unlocked.</td>
+		</tr>
+		<tr>
+			<th>1</th>
+			<td>Write protect erase skip | lock/unlock command failed</td>
+			<td>This status bit has two functions overloaded. It is set when the host attempts to erase a write-protected sector or makes a sequence or password errors during card lock/unlock operation.</td>
+		</tr>
+		<tr>
+			<th>2</th>
+			<td>Error</td>
+			<td>A general or an unknown error occurred during the operation.</td>
+		</tr>
+		<tr>
+			<th>3</th>
+			<td>CC error</td>
+			<td>Internal card controller error.</td>
+		</tr>
+		<tr>
+			<th>4</th>
+			<td>Card ECC failed</td>
+			<td>Card internal ECC was applied but failed to correct the data.</td>
+		</tr>
+		<tr>
+			<th>5</th>
+			<td>Write protect violation</td>
+			<td>The command tried to write a write-protected block.</td>
+		</tr>
+		<tr>
+			<th>6</th>
+			<td>Erase param</td>
+			<td>An invalid selection for erase, sectors or groups.</td>
+		</tr>
+		<tr>
+			<th>7</th>
+			<td>out of range | csd overwrite</td>
+			<td></td>
+		</tr>
+	</tbody></table></p><p>
+
+	<b>Response R3</b><br>
+	Five bytes in width. The first byte sent is identical to R1. The following four bytes are the contents of the OCR register.</p><p>
+
+	<b>Response R7</b><br>
+	Five bytes in width. This is the response token is sent by the card when a SEND_IF_COND command (CMD8) is received.<br>
+	[TODO: Figure this out, ugh.]<br>
+
+
+	</p><p>
+	<br>
+	Who wants a flowchart?! Everybody loooves flowcharts!<br>
+	<a href="./Secure Digital Card Info_files/SDcardInitFlowchart_3.01.png"><img src="./Secure Digital Card Info_files/SDcardInitFlowchart_3.01.png" width="850" alt=""></a><br>
+	And that is how you bring an SD card from power on to initialized and ready for use. (Click image to embiggen.) <!--Insert your favorite designed-by-committee joke here.--><br>
+	I'm not going to blow smoke up your tailpipe and tell you it's better than it looks, because it's not. The good news is if you know exactly what you're plugging in you can skip the irrelevant bits - you don't need to implement the <i>whole</i> tree for a simple personal project. Some cards may let you get away with far fewer setup commands than depicted, in fact some may let you start slinging data immediately after CMD0 with CS asserted - your mileage may vary though.<br>
+
+	</p><p>
+	Still to do:<br>
+	 - Flow charts and description of tokens for read/write commands.<br>
+	 - Actually test this stuff.<br>
+	 - Detail registers on card<br>
+
+
+
+		</p><hr width="80%">
+		<center><a href="http://chlazza.nfshost.com/disclaimer.html" target="_blank">DISCLAIMER</a><br>
+		All content is owned by its respective creators/license holders.<br>
+		Unless otherwise stated, everything else: Copyright © 2009-2010, Chlazza</center>
+
+	
+
+</body></html>

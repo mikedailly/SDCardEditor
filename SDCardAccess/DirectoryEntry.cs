@@ -62,7 +62,7 @@ namespace SDCardAccess
         /// <summary>MSDOS date time value</summary>
         UInt32 MSDOS_LastWriteDateTime;
         /// <summary>MSDOS date value</summary>
-        UInt32 MSDOS_LastAccessDate;
+        //UInt32 MSDOS_LastAccessDate;
 
         // *********************************************************************************************************
         /// <summary>
@@ -142,6 +142,7 @@ namespace SDCardAccess
             int month = _datetime.Month;
             int year = _datetime.Year;
 
+            /*
             if (month > 12) month = 12;
             if (month < 0) month = 0;
             if (hours > 23) hours = 23;
@@ -151,7 +152,7 @@ namespace SDCardAccess
             if (seconds > 59) seconds = 59;
             if (seconds < 0) seconds = 0;
             day = CheckDay(year, month, day);
-
+            */
             _datetime = new DateTime(year, month, day, hours, minutes, seconds, 0);
             return _datetime;
         }
@@ -267,7 +268,7 @@ namespace SDCardAccess
 
             MSDOS_CreateDateTime = 0;
             MSDOS_LastWriteDateTime = 0;
-            MSDOS_LastAccessDate = 0;
+            //MSDOS_LastAccessDate = 0;
 
             Filename = "";
             ShortName = "";
