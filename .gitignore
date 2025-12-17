@@ -31,3 +31,4 @@ SDCardAccess/obj/
 SDCardEditor/bin/
 SDCardEditor/obj/
 .vs/
+SDCardEditor/SDCardEditor.csproj.user

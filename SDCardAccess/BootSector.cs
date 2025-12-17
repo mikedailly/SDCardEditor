@@ -85,9 +85,9 @@ namespace SDCardAccess
         /// <summary>
         ///     Create a new boot sector class - won't change, but handy to havce around
         /// </summary>
-        /// <param name="_sector"></param>
+        /// <param name="_sector">Boot sector</param>
         // ****************************************************************************************************************************************
-        public BootSector(Sector _sector)
+        public BootSector(Sector _sector, Partition _partition)
         {
             SectorNumber = (int)_sector.Number;
 
@@ -108,6 +108,7 @@ namespace SDCardAccess
 
             if (SectorsPerFAT!=0)
             {
+                //if (_sector.nop)
                 FatType = eFATType.FAT16;
 
                 BytesPerSector = (int)b[0x0b] + (((int)b[0x0c]) << 8);
@@ -116,7 +117,7 @@ namespace SDCardAccess
                 FATCopies = (int)b[0x10];
 
                 FAT16_NumRootEntries = (int)b[0x11] + (((int)b[0x12]) << 8);
-                int num_sectors_small = (int)b[0x13] + (((int)b[0x14]) << 8);
+                PartitionSectors = (int)b[0x13] + (((int)b[0x14]) << 8);            // sectors for <32mb cards
 
                 int MediaDescription = b[0x15];
 
@@ -124,7 +125,11 @@ namespace SDCardAccess
                 SectorsPerTrack = (int)b[0x19] + (((int)b[0x19]) << 8);
                 Heads = (int)b[0x1a] + (((int)b[0x1b]) << 8);
                 FAT16_HiddenSectors = (int)b[0x1c] + (((int)b[0x1d]) << 8) + (((int)b[0x1e]) << 16) + (((int)b[0x1f]) << 24);
-                PartitionSectors = (int)b[0x20] + (((int)b[0x21]) << 8) + (((int)b[0x22]) << 16) + (((int)b[0x23]) << 24);
+
+                if (PartitionSectors == 0)
+                {
+                    PartitionSectors = (int)b[0x20] + (((int)b[0x21]) << 8) + (((int)b[0x22]) << 16) + (((int)b[0x23]) << 24);
+                }
                 FAT16_DriveNumber = (int)b[0x20];
                 int ExtBootSig = (int)b[0x26];
                 if (ExtBootSig == 0x29)

@@ -86,7 +86,7 @@ namespace SDCardAccess
 
         // ********************************************************************************************
         /// <summary>
-        ///     Read Master Boot Rector
+        ///     Read Master Boot Rector - detect FAT32 boot record (and no partitions)
         /// </summary>
         // ********************************************************************************************
         private void ReadMBR()
@@ -95,14 +95,21 @@ namespace SDCardAccess
             Sector s = SectorManager.ReadSector(0);
 
             Partition p = new Partition(s, 0);
-            if (p.LBABegin != 0) Partitions.Add(p);
-            p = new Partition(s, 1);
-            if (p.LBABegin != 0) Partitions.Add(p);
-            p = new Partition(s, 2);
-            if (p.LBABegin != 0) Partitions.Add(p);
-            p = new Partition(s, 3);
-            if (p.LBABegin != 0) Partitions.Add(p);
-
+            if (!p.IsFAT32)
+            {
+                Partitions.Add(p);
+                p = new Partition(s, 1);
+                if (p.LBABegin != 0) Partitions.Add(p);
+                p = new Partition(s, 2);
+                if (p.LBABegin != 0) Partitions.Add(p);
+                p = new Partition(s, 3);
+                if (p.LBABegin != 0) Partitions.Add(p);
+            }
+            else
+            {
+                p.LBABegin = 0;
+                Partitions.Add(p);
+            }
             CurrentPartition = Partitions[0];
         }
 
@@ -112,10 +119,11 @@ namespace SDCardAccess
         /// </summary>
         /// <param name="_sector">The LBABegin of this partition</param>
         // ********************************************************************************************
-        private void ReadBootSector(long _sector)
+        private void ReadBootSector(Partition _partition)
         {
-            Sector s = SectorManager.ReadSector(_sector);
-            BootSector = new BootSector(s);
+            long sectorBase = _partition.LBABegin;
+            Sector s = SectorManager.ReadSector(sectorBase);
+            BootSector = new BootSector(s, _partition);
 
             BytesPerSector = BootSector.BytesPerSector;
             SectorManager.SectorSize = BytesPerSector;
@@ -778,7 +786,7 @@ namespace SDCardAccess
             CurrentDirectory = "";
 
             ReadMBR();
-            ReadBootSector(CurrentPartition.LBABegin);
+            ReadBootSector(CurrentPartition);
             ClusterManager = new ClusterManager(CLUSTER_CACHE_DEFAULT, BootSector, SectorManager, SDFile);
 
             ReadDirectory(BootSector.RootDriveTableCluster);
